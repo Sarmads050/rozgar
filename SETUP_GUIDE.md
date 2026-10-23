@@ -236,6 +236,28 @@ tayyar message mein chala jata hai. Poster download karke bhi bhej sakte hain.
 
 ---
 
+## Jo cheezein automatically ho chuki hain
+
+| Cheez | Status |
+|---|---|
+| GitHub repo + hourly build + Pages deploy | ✅ live |
+| IndexNow key (`<key>.txt`) + har build par Bing/Copilot/ChatGPT-search ko ping | ✅ on |
+| Custom-domain detection (`CNAME`) — domain lagte hi saare canonical/sitemap URLs shift | ✅ ready |
+| `robots.txt`, 3 sitemaps, canonicals, facet noindex | ✅ on |
+| JobPosting markup (1381 pages) | ✅ on |
+
+## Jo aapke account ke baghair nahi ho sakta
+
+| Kaam | Kyun | Aapko kya karna hai |
+|---|---|---|
+| **Search Console** | Google login chahiye | 3 minute — neeche 9a |
+| **Email alerts (automated)** | Resend/Gmail account chahiye | 5 minute — STEP 8a |
+| **WhatsApp channel** | aapke phone se banna hota hai | 2 minute — STEP 8b |
+| **Domain** | paisa + aapka registrar account | jab final karein — STEP 10 |
+
+In teeno mein **code pehle se tayyar hai** — aap sirf token/link/naam dein,
+main commit kar deta hoon.
+
 ## STEP 9 — SEO (Google for Jobs + normal search)
 
 Ye sab already build mein hai — aapko sirf 3 kaam karne hain.

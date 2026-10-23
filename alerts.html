@@ -116,12 +116,26 @@
         <li>Confirm email par "Yes" click karein — alerts shuru.</li>
       </ol>
       <div class="cta">
-        <a class="btn-primary" id="emailFormBtn" href="#" target="_blank" rel="noopener">
-          Email alert subscribe karein →
+        <form id="subForm" style="display:grid;gap:8px;margin:0 0 12px">
+          <input id="subEmail" type="email" required placeholder="aapka@email.com"
+                 style="padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <select id="subCity" style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)">
+              <option value="">Koi bhi shehar</option>
+              <option>Karachi</option><option>Lahore</option><option>Islamabad</option>
+              <option>Rawalpindi</option><option>Faisalabad</option><option>Peshawar</option>
+              <option>Multan</option><option>Quetta</option><option>Hyderabad</option><option>Sukkur</option>
+            </select>
+            <input id="subKw" placeholder="Keywords (e.g. teacher)"
+                   style="padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink)">
+          </div>
+          <button type="submit" class="btn-primary" style="border:0;width:100%">Subscribe — email khol dein</button>
+        </form>
+        <a class="btn-ghost" id="emailFormBtn" href="#" target="_blank" rel="noopener" style="display:none">
+          Google Form se subscribe karein →
         </a>
         <p style="font-size:12px;color:var(--muted);margin:10px 0 0">
-          Ya <a href="feed.xml" style="color:var(--brand);text-decoration:underline">RSS feed</a>
-          follow karein apne reader mein.
+          <a href="feed.xml" style="color:var(--brand);text-decoration:underline">RSS feed</a> bhi mojood hai.
         </p>
       </div>
     </section>
@@ -205,21 +219,41 @@
 <script>
   document.getElementById('yr').textContent = new Date().getFullYear();
 
+  /* ── Zero-backend subscribe: form → pre-filled email to the owner ───── */
+  let CONFIG = null;
+  document.getElementById('subForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const to = (CONFIG && CONFIG.alerts && CONFIG.alerts.owner_email) || '';
+    const email = document.getElementById('subEmail').value.trim();
+    const city = document.getElementById('subCity').value || 'Any';
+    const kw = document.getElementById('subKw').value.trim() || '-';
+    if (!to) {
+      alert('Alerts abhi configure nahi hue. Thodi dair baad try karein.');
+      return;
+    }
+    const body = 'SUBSCRIBE ROZGAR ALERTS' +
+      '\nEmail: ' + email + '\nCity: ' + city + '\nKeywords: ' + kw;
+    try { localStorage.setItem('rozgar-sub', JSON.stringify({email, city, kw})); } catch (e) {}
+    location.href = 'mailto:' + to +
+      '?subject=' + encodeURIComponent('SUBSCRIBE: Rozgar job alerts') +
+      '&body=' + encodeURIComponent(body);
+  });
+
   /* ── Links are injected from data/site-config.json so the owner can change
         them in one place without touching HTML. ─────────────────────────── */
   fetch('data/site-config.json', { cache: 'no-store' })
     .then(r => r.ok ? r.json() : null)
     .then(cfg => {
+      CONFIG = cfg;
       if (!cfg) return;
       const email = cfg.alerts && cfg.alerts.email_form_url;
       const wa    = cfg.alerts && cfg.alerts.whatsapp_channel_url;
 
-      if (email) document.getElementById('emailFormBtn').href = email;
-      else {
+      if (email) {
         const b = document.getElementById('emailFormBtn');
-        b.textContent = 'Email alerts — jald aa raha hai';
-        b.style.opacity = '.55';
-        b.style.pointerEvents = 'none';
+        b.href = email;
+        b.style.display = 'inline-block';
+        b.textContent = 'Ya Google Form se subscribe karein →';
       }
 
       if (wa) document.getElementById('waChannelBtn').href = wa;

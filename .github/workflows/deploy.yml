@@ -38,11 +38,17 @@ jobs:
       - name: Work out the site URL
         id: site
         run: |
-          if [ "${{ github.event.repository.name }}" = "${{ github.repository_owner }}.github.io" ]; then
+          # Custom domain lagne par GitHub khud CNAME file banata hai —
+          # us surat mein saare canonical / sitemap / JobPosting URLs domain par shift ho jate hain.
+          if [ -f CNAME ]; then
+            DOMAIN=$(tr -d '[:space:]' < CNAME)
+            echo "url=https://${DOMAIN}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.repository.name }}" = "${{ github.repository_owner }}.github.io" ]; then
             echo "url=https://${{ github.repository_owner }}.github.io" >> "$GITHUB_OUTPUT"
           else
             echo "url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" >> "$GITHUB_OUTPUT"
           fi
+          echo "final URL: $(tail -1 "$GITHUB_OUTPUT")"
 
       # Jobs are fetched fresh on every run. Nothing is committed back except the
       # tiny alert state file, so the repository stays small.
@@ -90,7 +96,7 @@ jobs:
         continue-on-error: true
         env:
           SITE_URL: ${{ steps.site.outputs.url }}
-          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY || '0ff29aca72ad22477ca16079c8ab229f' }}
         run: python scripts/ping_indexnow.py
 
       - name: Configure Pages

@@ -5,7 +5,8 @@
     "email_form_url": "",
     "whatsapp_channel_url": "",
     "whatsapp_group_url": "",
-    "rss_feed": "feed.xml"
+    "rss_feed": "feed.xml",
+    "owner_email": ""
   },
   "contact_email": "",
   "social": {
