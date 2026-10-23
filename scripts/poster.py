@@ -193,6 +193,19 @@ INSTRUCTION_WORDS = ("apply", "send", "submit", "visit", "email", "e-mail", "for
                      "registration", "register", "contact", "walk-in", "whatsapp")
 
 
+
+_URDU_MARKERS = ("karain", "karein", "kholein", "kholain", "wahan", "tafseel", "poora",
+                 "poori", "hai", "hain", "nahi", "aap", "ke liye", "ki list", "aur fee",
+                 "bhejein", "darkhwast", "zaroori", "sakte")
+
+
+def looks_roman_urdu(text):
+    """True when the text is Roman Urdu rather than English."""
+    low = " " + re.sub(r"\s+", " ", str(text or "")).lower() + " "
+    hits = sum(1 for m in _URDU_MARKERS if f" {m} " in low)
+    return hits >= 2
+
+
 def clean_how(v, source="", limit=230):
     """HOW TO APPLY — scraped body text ko instruction mein badlein."""
     t = re.sub(r"\s+", " ", str(v or "")).strip()
@@ -202,10 +215,11 @@ def clean_how(v, source="", limit=230):
     instructional = any(k in low for k in INSTRUCTION_WORDS)
 
     # job board ka generic paragraph — asli instruction nahi hota
-    if not t or not instructional or len(t) < 40 or t.endswith(("then", "and", "or", "to", "for")):
-        src = (source or "the original ad").replace(".pk", ".pk")
-        return (f"Apply online on {src} — QR scan karein ya job page kholein. "
-                f"Poora advertisement, documents ki list aur fee ki tafseel wahan hai.")
+    if not t or not instructional or len(t) < 40 or t.endswith(("then", "and", "or", "to", "for")) \
+            or looks_roman_urdu(t):
+        src = (source or "the original advertisement").replace(".pk", ".pk")
+        return (f"Apply on {src}: open the original advertisement for the full process, "
+                f"the document list and any fee details.")
 
     if len(t) > limit:
         cut = t[:limit].rsplit(" ", 1)[0].rstrip(" ,.;")

@@ -78,6 +78,36 @@ def one_line(s):
     return WS_RE.sub(" ", (s or "")).strip()
 
 
+
+# ── sector detection ───────────────────────────────────────────────────────
+# Job boards publish private companies inside "government jobs" listing pages,
+# so the page heading alone is not enough. Private markers win, then public
+# institution words, then the source's own hint.
+_PRIVATE_MARKERS = ("private limited", "pvt", "pvt.", "(pvt)", " ltd", "limited", "llc",
+                    "industries", "textile", "mills", "group", "enterprises", "traders",
+                    "pharmaceutical", "laboratories", "solutions", "technologies",
+                    "systems", "steel", "cement", "sugar", "bank limited")
+_PUBLIC_MARKERS = ("government", "govt", "ministry", "department", "authority", "commission",
+                   "court", "police", "army", "navy", "air force", "rangers", "fia ",
+                   "municipal", "council", "board", "university", "college", "hospital",
+                   "district health", "education department", "secretariat", "fpsc", "ppsc",
+                   "njp", "bps-", "tehsil", "union council", "public service")
+
+
+def guess_sector(company, title, body="", hint=False):
+    """Return 'government' or 'private' for a Pakistani listing."""
+    head = f"{company} {title}".lower()
+    tail = (body or "")[:800].lower()
+    if any(m in head for m in _PRIVATE_MARKERS):
+        return "private"
+    public_hits = sum(1 for m in _PUBLIC_MARKERS if m in head)
+    if public_hits >= 1:
+        return "government"
+    if any(m in tail for m in _PUBLIC_MARKERS[:14]):
+        return "government"
+    return "government" if hint else "private"
+
+
 def clip(s, n):
     s = one_line(s)
     if len(s) <= n:
@@ -333,7 +363,7 @@ def _parse_njp(jid, src):
         "employer_display": employer,
         "location": loc or "Pakistan",
         "type": job_type,
-        "sector": "government",
+        "sector": guess_sector(employer, title, body, True),
         "category": classify_pk(title, body),
         "bps": grade,
         "vacancies": int(vac_num.group(1)) if vac_num else None,
@@ -475,7 +505,7 @@ def _parse_jobsalert(post):
         "employer_display": clip(employer, 70),
         "location": loc or "Pakistan",
         "type": "Full Time",
-        "sector": "government" if govt else "private",
+        "sector": guess_sector(employer, title, body, govt),
         "category": classify_pk(title, body),
         "bps": (field(body, "BPS", "Grade") or ""),
         "vacancies": int(vac_num.group(1)) if vac_num else None,
@@ -632,7 +662,7 @@ def _parse_ilmkidunya(slug, src):
         "employer_display": clip(employer, 70),
         "location": clip(loc, 40) or "Pakistan",
         "type": jtype if "full" in jtype.lower() or "part" in jtype.lower() else "Full Time",
-        "sector": "government" if "government" in jtype.lower() or "govt" in (jtype + body[:600]).lower() else "private",
+        "sector": guess_sector(employer, title, body, "government" in jtype.lower()),
         "category": classify_pk(title, body),
         "bps": field(body, "BPS", "Grade"),
         "vacancies": int(vac.group(1)) if vac else None,

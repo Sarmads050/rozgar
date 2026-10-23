@@ -220,10 +220,11 @@ function renderStats() {
   $("#stPk").textContent = pkCount.toLocaleString();
   $("#stGov").textContent = govCount.toLocaleString();
   $("#stNew").textContent = (m.new_today || 0).toLocaleString();
-  $("#heroCount").textContent = (m.count || 0).toLocaleString();
+  const heroCount = $("#heroCount");
+  if (heroCount) heroCount.textContent = (m.count || 0).toLocaleString();
 
   const when = m.generated_at ? new Date(m.generated_at) : new Date();
-  $("#topStatus").textContent = `Updated ${ago(when.getTime() / 1000)} · ${(m.count || 0).toLocaleString()} jobs live`;
+  $("#topStatus").textContent = `${(m.count || 0).toLocaleString()} jobs · ${ago(when.getTime() / 1000)}`;
 
   if (m.sources) {
     $("#sourceList").innerHTML = m.sources

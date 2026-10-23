@@ -159,3 +159,63 @@ JobPosting schema (1,371 pages) · sitemaps (3) · canonicals · facet noindex �
 **C.** SEO: 40 naye landing pages + About/Contact/Privacy + FAQ schema — 2 din ka kaam
 
 Meri sifarish: **B → C → baqi A**. Pehle mobile fix (sab se bara UX nuksan), phir SEO pages, phir poora redesign.
+
+---
+
+# ⚙️ Implementation log — 23 Oct 2026
+
+Everything below was **researched first, then built**. Nothing here is a proposal any more.
+
+## 1. Research that changed the plan
+
+| Question | What the research said | What we did |
+|---|---|---|
+| Is the design actually the problem? | Every audit says 60–70 % of job-board traffic is mobile; CTAs in the bottom 20 % of the screen convert ~35–40 % better; tap targets need 44–48 px; inputs ≥16 px stop iOS zoom; search + first CTA must be above the fold | Full mobile-first rebuild (below) |
+| Can we mass-generate city × role pages? | No. Google's doorway-page and scaled-content-abuse policies target exactly that. Safe bar: 60–70 % unique copy per page, real per-page data, published 5–10 per week — not 50 in one batch | Raised the quality gate to **5 real jobs per page** and made every page carry its own numbers, employers, deadline data and Q&A |
+| Does the emoji bell render? | No — it showed as a tofu box on the live mobile screenshot | Replaced with an inline SVG |
+
+## 2. Design — "Rozgar Pro", now live
+
+- Hero cut from ~320 px to ~120 px; the four tall stat blocks became one inline strip
+  (`live · in Pakistan · government · new today`).
+- **2-column poster grid on phones** (3-column from 900 px), so 4–6 jobs are visible in the
+  first screen instead of zero.
+- **Bottom navigation** on phones: Jobs · Alerts · Saved · Post a job.
+- Sticky search bar on phones; sticky **“Apply on …”** bar on job pages.
+- Navy `#0f2a47` + gold `#c9a227` palette, 46 px+ controls, 16 px inputs.
+- Landing pages keep desktop cards; the mobile grid only restyles poster cards.
+
+## 3. Easy English rewrite
+
+Every user-facing string is now plain English: home page, alerts, employers, 404, job pages,
+landing pages, posters, error messages and toasts. The only Roman Urdu left is inside internal
+guides (`SETUP_GUIDE.md`, `README.md`) which are not part of the website.
+
+## 4. Local job format (employer postings)
+
+| File | Purpose |
+|---|---|
+| `scripts/add_job.py` | Guided questions → appends to `data/manual-jobs.json` |
+| `scripts/check_jobs.py` | Validates JSON + CSV: missing title, past closing date, bad link, short description, duplicates |
+| `data/jobs-template.csv` | Sheet template with every poster field |
+| `data/manual-jobs.schema.json` | Field-by-field explanation |
+| `data/HOW-TO-ADD-JOBS.md` | The whole process in plain English |
+
+`scripts/fetch_jobs.py` now reads qualification, experience, age limit, vacancies, BPS,
+last date and application steps from CSV submissions too — so imported jobs get the same
+poster and detail page as hand-added ones.
+
+## 5. SEO work in this pass
+
+- New pages: **About, Contact, Privacy, Terms** — all linked in the footer and in `sitemap-pages.xml`.
+- **FAQPage schema** on every city/category page, with answers built from that page's own data.
+- Job pages now link **up** to their city page and their category page (real internal links, not
+  a sitemap-only orphan).
+- Filtered URLs (`?q=`, `?city=`, `?saved=1` …) are marked `noindex,follow` with a clean canonical.
+- Landing pages link to each other; each page also lists the employers hiring in that city.
+
+## 6. Still owned by you
+
+1. `alerts.owner_email` in `data/site-config.json` — real address so the alert form works.
+2. Google Form URL if you prefer a form over email.
+3. Domain name — add a `CNAME` file and the build switches every canonical URL automatically.
