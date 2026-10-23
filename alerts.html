@@ -98,6 +98,9 @@
           <input id="subKw" class="field" placeholder="Keyword (e.g. teacher)">
         </div>
         <button type="submit" class="btn-primary" style="border:0;width:100%;min-height:48px">Subscribe by email</button>
+        <p id="subMsg" role="status" hidden
+           style="margin:0;font-size:12.6px;line-height:1.5;color:var(--muted);
+                  background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:9px 11px"></p>
       </form>
 
       <a class="btn-ghost" id="emailFormBtn" href="#" target="_blank" rel="noopener" style="display:none">
@@ -214,7 +217,9 @@
     const kw = document.getElementById('subKw').value.trim() || '-';
 
     if (!to) {
-      alert('Alerts are not switched on yet. Please try again later.');
+      const msg = document.getElementById('subMsg');
+      msg.hidden = false;
+      msg.textContent = 'Email alerts are being set up right now. Until they are live you can follow the RSS feed — it updates every hour with the newest jobs.';
       return;
     }
     const body = 'SUBSCRIBE ROZGAR ALERTS\nEmail: ' + email + '\nCity: ' + city + '\nKeywords: ' + kw;
