@@ -54,6 +54,7 @@ jobs:
           SITE_URL: ${{ steps.site.outputs.url }}
           PK_LIMIT: "90"
           POSTER_LIMIT: "400"
+          POSTER_THEME: "navy"        # navy | noir | maroon
         run: python scripts/fetch_jobs.py
 
       # ── Job alerts: email + WhatsApp ────────────────────────────────────
