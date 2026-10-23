@@ -40,13 +40,17 @@ jobs:
         run: |
           # Custom domain lagne par GitHub khud CNAME file banata hai —
           # us surat mein saare canonical / sitemap / JobPosting URLs domain par shift ho jate hain.
+          # Hostnames are case-insensitive but canonical URLs must match the sitemap
+          # exactly, so everything is lowercased before it reaches the templates.
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
           if [ -f CNAME ]; then
-            DOMAIN=$(tr -d '[:space:]' < CNAME)
+            DOMAIN=$(tr -d '[:space:]' < CNAME | tr '[:upper:]' '[:lower:]')
             echo "url=https://${DOMAIN}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.event.repository.name }}" = "${{ github.repository_owner }}.github.io" ]; then
-            echo "url=https://${{ github.repository_owner }}.github.io" >> "$GITHUB_OUTPUT"
+          elif [ "$REPO" = "${OWNER}.github.io" ]; then
+            echo "url=https://${OWNER}.github.io" >> "$GITHUB_OUTPUT"
           else
-            echo "url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" >> "$GITHUB_OUTPUT"
+            echo "url=https://${OWNER}.github.io/${REPO}" >> "$GITHUB_OUTPUT"
           fi
           echo "final URL: $(tail -1 "$GITHUB_OUTPUT")"
 
