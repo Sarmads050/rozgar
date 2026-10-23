@@ -42,6 +42,22 @@ echo "✓ push ho gaya"
 
 # ── GitHub Pages ko "GitHub Actions" source par set karein (agar permission ho)
 if [[ "${ENABLE_PAGES:-1}" == "1" ]]; then
+  # pehle dekhein Pages pehle se on hai ya nahi
+  already=$(curl -s -o /dev/null -w '%{http_code}' \
+    -H "Authorization: Bearer ${TOKEN}" \
+    -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${SLUG}/pages" || true)
+  if [[ "$already" == "200" ]]; then
+    echo "✓ Pages on hai (source: GitHub Actions)"
+    OWNER="${SLUG%%/*}"; NAME="${SLUG##*/}"
+    if [[ "$NAME" == "${OWNER}.github.io" ]]; then
+      echo "🌐 Site: https://${OWNER}.github.io/"
+    else
+      echo "🌐 Site: https://${OWNER}.github.io/${NAME}/"
+    fi
+    exit 0
+  fi
+
   code=$(curl -s -o /tmp/pages.json -w '%{http_code}' -X POST \
     -H "Authorization: Bearer ${TOKEN}" \
     -H "Accept: application/vnd.github+json" \
