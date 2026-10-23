@@ -764,7 +764,7 @@ PAGE = """<!DOCTYPE html>
         </a>
         <button class="share-btn" data-share>Copy link</button>
         <a class="share-btn" href="../alerts.html" style="margin-top:8px;display:block;text-align:center;text-decoration:none">
-          🔔 Aise jobs ki alert lein
+          <svg viewBox=\'0 0 24 24\' width=\'14\' height=\'14\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\' aria-hidden=\'true\' style=\'vertical-align:-2px;margin-right:4px\'><path d=\'M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9\'/><path d=\'M13.7 21a2 2 0 0 1-3.4 0\'/></svg>Aise jobs ki alert lein
         </a>
       </div>
     </aside>
@@ -1004,7 +1004,13 @@ def job_jsonld(job, canonical, page_url=""):
     if job.get("category"):
         data["occupationalCategory"] = job["category"]
 
-    return '<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False) + "</script>"
+    return _ld(data)
+
+
+def _ld(data):
+    """JSON-LD block — '</script>' ko escape karta hai taake description se breakout na ho."""
+    raw = json.dumps(data, ensure_ascii=False).replace("</", "<\\/")
+    return '<script type="application/ld+json">' + raw + "</script>"
 
 
 def breadcrumb_jsonld(job, canonical):
@@ -1021,7 +1027,7 @@ def breadcrumb_jsonld(job, canonical):
             for i, (name, url) in enumerate(items)
         ],
     }
-    return '<script type="application/ld+json">' + json.dumps(data, ensure_ascii=False) + "</script>"
+    return _ld(data)
 
 
 def build_page(job, related):
@@ -1172,6 +1178,8 @@ LANDING_PAGE = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39; &#39;unsafe-inline&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src &#39;self&#39; https: data:; font-src &#39;self&#39; data:; connect-src &#39;self&#39; https:; form-action &#39;self&#39; mailto:; base-uri &#39;self&#39;; object-src &#39;none&#39;">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{title} ({count} Vacancies) | Rozgar</title>
 <meta name="description" content="{desc}">
 <meta name="robots" content="index,follow">

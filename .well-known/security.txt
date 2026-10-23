@@ -1,0 +1,6 @@
+Contact: mailto:security@rozgar.pk
+Preferred-Languages: en, ur
+Canonical: https://sarmads050.github.io/rozgar/.well-known/security.txt
+Policy: https://sarmads050.github.io/rozgar/employers.html
+# Rozgar never asks candidates for money. Report fake listings or phishing here.
+Expires: 2027-10-23T00:00:00.000Z
