@@ -32,25 +32,68 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 FONT_DIR = os.path.join(os.path.dirname(HERE), "assets", "fonts")
 
 # ── palettes ────────────────────────────────────────────────────────────────
-PALETTES = {
-    "emerald": dict(accent="#047857", accent2="#10b981", soft="#ecfdf5", ink="#04352b", badge="#065f46"),
-    "royal":   dict(accent="#1d4ed8", accent2="#3b82f6", soft="#eff6ff", ink="#0b1f45", badge="#1e3a8a"),
-    "crimson": dict(accent="#be123c", accent2="#f43f5e", soft="#fff1f2", ink="#3f0713", badge="#881337"),
-    "amber":   dict(accent="#b45309", accent2="#f59e0b", soft="#fffbeb", ink="#3b2405", badge="#78350f"),
-    "violet":  dict(accent="#6d28d9", accent2="#8b5cf6", soft="#f5f3ff", ink="#221145", badge="#4c1d95"),
-    "teal":    dict(accent="#0f766e", accent2="#14b8a6", soft="#f0fdfa", ink="#042f2b", badge="#115e59"),
+# ══════════════════════════════════════════════════════════════════════════
+#  THEMES — har theme mein 6 palettes + dark backgrounds
+#
+#  POSTER_THEME env var se switch karein:  navy (default) | noir | maroon
+#  Sector → palette mapping neeche SECTOR_PALETTE mein hai.
+# ══════════════════════════════════════════════════════════════════════════
+_THEMES = {
+    # ── A: deep navy + gold — official, premium, newspaper-clean
+    "navy": {
+        "palettes": {
+            "emerald": dict(accent="#12305A", accent2="#3C7DD9", soft="#EEF3FA", ink="#0A1B33", badge="#0C2140"),
+            "royal":   dict(accent="#1F2E8A", accent2="#5B7CFA", soft="#EEF1FD", ink="#0B1433", badge="#16226B"),
+            "crimson": dict(accent="#9A1B3D", accent2="#E2557C", soft="#FDF1F4", ink="#3A0716", badge="#77122C"),
+            "amber":   dict(accent="#8A6512", accent2="#D9A928", soft="#FCF7E7", ink="#2E2204", badge="#6A4C0B"),
+            "violet":  dict(accent="#43267F", accent2="#8C6BE8", soft="#F4F1FD", ink="#180D35", badge="#331E63"),
+            "teal":    dict(accent="#0A5C6B", accent2="#2AB5C8", soft="#EAF8FA", ink="#03303A", badge="#074954"),
+        },
+        "dark": {"emerald": "#071A33", "royal": "#060F2B", "crimson": "#2A0712",
+                 "amber": "#211705", "violet": "#120A28", "teal": "#032A32"},
+    },
+    # ── B: graphite + neon — modern tech, strong contrast
+    "noir": {
+        "palettes": {
+            "emerald": dict(accent="#1F2937", accent2="#60A5FA", soft="#F3F4F6", ink="#0B1220", badge="#111827"),
+            "royal":   dict(accent="#0F172A", accent2="#38BDF8", soft="#F1F5F9", ink="#080E1C", badge="#0B1220"),
+            "crimson": dict(accent="#7F1D1D", accent2="#F87171", soft="#FEF2F2", ink="#2A0808", badge="#5C1414"),
+            "amber":   dict(accent="#78350F", accent2="#FBBF24", soft="#FFFBEB", ink="#2C1A05", badge="#5A270B"),
+            "violet":  dict(accent="#312E81", accent2="#A78BFA", soft="#F5F3FF", ink="#15133F", badge="#252262"),
+            "teal":    dict(accent="#134E4A", accent2="#2DD4BF", soft="#F0FDFA", ink="#042F2C", badge="#0D3B38"),
+        },
+        "dark": {"emerald": "#0B1220", "royal": "#060B18", "crimson": "#240606",
+                 "amber": "#1F1404", "violet": "#110F33", "teal": "#04211F"},
+    },
+    # ── C: maroon + cream — warm, traditional, "newspaper of jobs"
+    "maroon": {
+        "palettes": {
+            "emerald": dict(accent="#6B1220", accent2="#C99A2E", soft="#FAF3EC", ink="#320812", badge="#520E19"),
+            "royal":   dict(accent="#1F3B57", accent2="#4C86B8", soft="#EFF4F8", ink="#0B1A28", badge="#172D43"),
+            "crimson": dict(accent="#8E1F4B", accent2="#D9558A", soft="#FCF1F5", ink="#360818", badge="#6D1739"),
+            "amber":   dict(accent="#8A5A12", accent2="#D9A33A", soft="#FBF5E8", ink="#2E1D04", badge="#6A440D"),
+            "violet":  dict(accent="#4A2A6B", accent2="#9B72CF", soft="#F6F2FB", ink="#1C0F2B", badge="#38214F"),
+            "teal":    dict(accent="#14524B", accent2="#38A79A", soft="#EDF8F6", ink="#04302B", badge="#0E3D38"),
+        },
+        "dark": {"emerald": "#2A0710", "royal": "#08192B", "crimson": "#260613",
+                 "amber": "#221703", "violet": "#160B26", "teal": "#052621"},
+    },
 }
 
+THEME = (os.environ.get("POSTER_THEME") or "navy").strip().lower()
+_ACTIVE = _THEMES.get(THEME, _THEMES["navy"])
+PALETTES = _ACTIVE["palettes"]
+DARK_BG = _ACTIVE["dark"]
+
 SECTOR_PALETTE = {
-    "government": "emerald",
+    "government": "emerald",     # theme ka main colour
     "private": "royal",
     "remote": "violet",
     "internship": "crimson",
     "contract": "amber",
 }
 
-DARK_BG = {"emerald": "#03231e", "royal": "#050f26", "crimson": "#26050d",
-           "amber": "#241705", "violet": "#150a2c", "teal": "#032624"}
+THEME_NAMES = {"navy": "Navy + Gold", "noir": "Graphite + Neon", "maroon": "Maroon + Cream"}
 
 
 # ── tiny helpers ────────────────────────────────────────────────────────────

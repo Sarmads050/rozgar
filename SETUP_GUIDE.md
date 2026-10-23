@@ -291,15 +291,32 @@ Ye sab already build mein hai — aapko sirf 3 kaam karne hain.
 Har job ka **apna** poster banta hai — 1080 × 1350 (Instagram/WhatsApp portrait),
 plus ek 1200 × 630 OG image jo link share karne par dikhti hai.
 
-**6 colour palettes** — sector ke hisaab se chunti hain:
+**3 themes** (env var `POSTER_THEME` se switch):
+
+| Theme | Look | Kab use karein |
+|---|---|---|
+| `navy` *(default)* | Deep navy + gold — official, premium | sarkari jobs ke liye sab se bharosemand |
+| `noir` | Graphite + neon — modern tech | private/IT focus ho to |
+| `maroon` | Maroon + cream — warm, traditional | "newspaper" feel chahiye to |
+
+Theme badalne ke liye bas ek line:
+
+```bash
+POSTER_THEME=maroon python scripts/fetch_jobs.py
+```
+
+GitHub Actions mein permanently badalna ho to `.github/workflows/deploy.yml` ke
+`Fetch jobs…` step mein add karein: `POSTER_THEME: "maroon"`.
+
+Har theme ke andar **6 palettes** sector ke hisaab se chunti hain:
 
 | Sector | Palette |
 |---|---|
-| Government | Emerald (dark green) |
-| Private | Royal blue / amber |
-| Internship | Crimson |
-| Contract | Amber |
-| Remote | Violet / teal |
+| Government | theme ka main colour (navy / graphite / maroon) |
+| Private | indigo / sapphire |
+| Internship | crimson |
+| Contract | gold / amber |
+| Remote | violet / teal |
 
 Palette aur light/dark layout job ke slug se deterministically chunte hain — yani
 ek job ka poster hamesha same dikhta hai, lekin 1000 jobs ke 1000 different posters

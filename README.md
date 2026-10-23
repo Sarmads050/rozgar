@@ -62,10 +62,11 @@ their terms require it.
 1080×1350 portrait + 1200×630 OG image per job, rendered with Pillow — no
 templates, no external assets.
 
-- **6 palettes** — emerald (govt), royal (private), crimson (internship),
-  amber (contract), violet (remote), teal — chosen deterministically from
-  `sha1(slug)` together with a light/dark layout, so posters never repeat but stay
-  stable between builds.
+- **3 themes** — `navy` (default, navy + gold), `noir` (graphite + neon) and
+  `maroon` (maroon + cream), switched with the `POSTER_THEME` env var. Each theme
+  carries 6 palettes (govt / private / internship / contract / remote / alt), chosen
+  deterministically from `sha1(slug)` together with a light/dark layout, so posters
+  never repeat but stay stable between builds.
 - **Content** — brand mark, sector badge, auto-shrunk title (≤ 3 lines), employer,
   up to 4 chips, a 2-column JOB DETAILS grid (≤ 6 facts), deadline banner with an
   “N days left” pill, HOW TO APPLY box with a 150 px QR, footer with site URL and
