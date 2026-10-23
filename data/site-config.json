@@ -1,5 +1,5 @@
 {
-  "_readme": "Rozgar ki site-wide settings. Ismein sirf woh cheezein hain jo owner ko badalni padti hain — baqi sab code se aata hai.",
+  "_readme": "Site-wide settings. Only the values an owner has to change live here. brand.* is used by the pages, the posters and the SEO templates.",
   "site_url": "https://rozgar.pk",
   "alerts": {
     "email_form_url": "",
@@ -8,9 +8,18 @@
     "rss_feed": "feed.xml",
     "owner_email": ""
   },
-  "contact_email": "",
+  "contact_email": "hello@rozgarjobs.com",
   "social": {
     "facebook": "",
     "x": ""
+  },
+  "brand": {
+    "name": "RozgarJobs",
+    "domain": "rozgarjobs.com",
+    "tagline": "Jobs in Pakistan, updated every hour",
+    "tagline_short": "Jobs in Pakistan",
+    "email": "hello@rozgarjobs.com",
+    "logo": "assets/img/logo.svg",
+    "mark": "assets/img/mark.svg"
   }
 }

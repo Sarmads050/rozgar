@@ -1,0 +1,47 @@
+# RozgarJobs
+> Free job board for Pakistan. Government, private and remote vacancies, updated every hour,
+> with the closing date, salary, qualification and age limit on every listing.
+
+Site: https://sarmads050.github.io/rozgar/
+Language: English (en-PK)
+Jobs live now: 1233
+
+## Main pages
+- [All jobs](https://sarmads050.github.io/rozgar/): search and filter every live vacancy
+- [Government jobs](https://sarmads050.github.io/rozgar/): filter the Government toggle
+- [Job alerts](https://sarmads050.github.io/rozgar/alerts.html): email and RSS alerts
+- [Post a job](https://sarmads050.github.io/rozgar/employers.html): employer listings
+- [About](https://sarmads050.github.io/rozgar/about.html) · [Contact](https://sarmads050.github.io/rozgar/contact.html) · [Privacy](https://sarmads050.github.io/rozgar/privacy.html) · [Terms](https://sarmads050.github.io/rozgar/terms.html)
+
+## City pages
+- [Karachi jobs](https://sarmads050.github.io/rozgar/jobs-in/karachi.html)
+- [Lahore jobs](https://sarmads050.github.io/rozgar/jobs-in/lahore.html)
+- [Islamabad jobs](https://sarmads050.github.io/rozgar/jobs-in/islamabad.html)
+- [Rawalpindi jobs](https://sarmads050.github.io/rozgar/jobs-in/rawalpindi.html)
+- [Peshawar jobs](https://sarmads050.github.io/rozgar/jobs-in/peshawar.html)
+
+## Category pages
+- [Admin & Clerical](https://sarmads050.github.io/rozgar/category/admin-clerical.html)
+- [Education & Teaching](https://sarmads050.github.io/rozgar/category/education-teaching.html)
+- [Health & Medical](https://sarmads050.github.io/rozgar/category/health-medical.html)
+- [Engineering](https://sarmads050.github.io/rozgar/category/engineering.html)
+- [Finance & Accounting](https://sarmads050.github.io/rozgar/category/finance-accounting.html)
+- [IT & Computer](https://sarmads050.github.io/rozgar/category/it-computer.html)
+- [Forces & Security](https://sarmads050.github.io/rozgar/category/forces-security.html)
+- [Support Staff (Class IV)](https://sarmads050.github.io/rozgar/category/support-staff-class-iv.html)
+- [Government / Other](https://sarmads050.github.io/rozgar/category/government-other.html)
+- [Software Development](https://sarmads050.github.io/rozgar/category/software-development.html)
+- [Marketing](https://sarmads050.github.io/rozgar/category/marketing.html)
+- [Sales](https://sarmads050.github.io/rozgar/category/sales.html)
+- [Customer Support](https://sarmads050.github.io/rozgar/category/customer-support.html)
+- [Design](https://sarmads050.github.io/rozgar/category/design.html)
+- [Data & Analytics](https://sarmads050.github.io/rozgar/category/data-analytics.html)
+- [Product](https://sarmads050.github.io/rozgar/category/product.html)
+- [Operations](https://sarmads050.github.io/rozgar/category/operations.html)
+- [HR & Recruiting](https://sarmads050.github.io/rozgar/category/hr-recruiting.html)
+- [Writing & Content](https://sarmads050.github.io/rozgar/category/writing-content.html)
+
+## Notes
+- Every job page links to the original advertisement; Rozgar is an index, not the employer.
+- We never charge candidates. Report a listing that asks for money.
+- Machine-readable feeds: [jobs.json](https://sarmads050.github.io/rozgar/data/jobs.json) · [RSS](https://sarmads050.github.io/rozgar/feed.xml) · [sitemap](https://sarmads050.github.io/rozgar/sitemap.xml)

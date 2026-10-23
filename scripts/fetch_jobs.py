@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rozgar — job board engine
+RozgarJobs — job board engine
 =========================
 Collects jobs from public, attribution-based job APIs, normalises them into
 one schema, writes data/jobs.json, generates a detail page per job
@@ -55,7 +55,7 @@ JOB_DIR = os.path.join(ROOT, "jobs")
 POSTER_DIR = os.path.join(ROOT, "posters")
 SITE_URL = os.environ.get("SITE_URL", "").rstrip("/")   # e.g. https://user.github.io/rozgar
 
-UA = "Mozilla/5.0 (compatible; RozgarJobBot/1.0; +https://github.com)"
+UA = "Mozilla/5.0 (compatible; RozgarJobsJobBot/1.0; +https://github.com)"
 TIMEOUT = 40
 MAX_JOBS = 1600          # kept in data/jobs.json
 MAX_PAGES = 2500        # a page for every listed job (no dead links)
@@ -380,7 +380,7 @@ def english_description(job):
         "submit anything."
     )
     parts.append(
-        "Rozgar never asks candidates for money. If anyone demands a fee, a deposit or your bank "
+        "RozgarJobs never asks candidates for money. If anyone demands a fee, a deposit or your bank "
         "details for this job, treat it as fraud and report the listing to us."
     )
     return " ".join(parts)
@@ -792,7 +792,7 @@ PAGE = """<!DOCTYPE html>
 <title>{page_title}</title>
 <meta name="description" content="{meta_desc}">
 <meta name="keywords" content="{keywords}">
-<meta name="author" content="Rozgar">
+<meta name="author" content="RozgarJobs">
 <meta name="robots" content="{robots}">
 <link rel="canonical" href="{canonical}">
 <meta property="og:type" content="article">
@@ -809,8 +809,8 @@ PAGE = """<!DOCTYPE html>
 <header class="site-head">
   <div class="wrap head-in">
     <a class="brand" href="../index.html">
-      <span class="brand-mark">R</span>
-      <span class="brand-text"><strong>Rozgar</strong><small>Remote &amp; Pakistan jobs</small></span>
+      <img class="brand-logo" src="../assets/img/mark.svg" alt="" width="38" height="38">
+      <span class="brand-text"><strong>Rozgar<span class="bj">Jobs</span></strong><small>Jobs in Pakistan</small></span>
     </a>
     <a class="head-cta" href="../index.html">← All jobs</a>
   </div>
@@ -886,7 +886,7 @@ PAGE = """<!DOCTYPE html>
   {similar}
 
   <p class="disclaimer">
-    Rozgar collects public job listings and links candidates to the employer or
+    RozgarJobs collects public job listings and links candidates to the employer or
     original job board. We never ask for money, registration fees or bank details.
     If a listing looks suspicious, report it.
   </p>
@@ -903,7 +903,7 @@ PAGE = """<!DOCTYPE html>
 
 <footer class="site-foot">
   <div class="wrap">
-    <p>© {year} Rozgar — jobs in Pakistan and remote roles, collected from public sources with credit.</p>
+    <p>© {year} RozgarJobs — jobs in Pakistan and remote roles, collected from public sources with credit.</p>
   </div>
 </footer>
 <script>
@@ -998,13 +998,13 @@ def _desc_html(job):
     # Google treats <100 words as thin — pad with honest, page-matching context
     pad = [
         (f"This vacancy was published by {esc(job.get('source', 'a public job source'))} and "
-         f"{"is" if job.get("is_pk") else "is also"} listed on Rozgar so that candidates in Pakistan "
+         f"{"is" if job.get("is_pk") else "is also"} listed on RozgarJobs so that candidates in Pakistan "
          f"can find it in one place. Always open the original advertisement and confirm every "
          f"detail before you apply."),
         (f"Applications are usually assessed against the qualification, experience and age "
          f"requirements listed above. Only shortlisted candidates are contacted, and incomplete "
          f"applications or those received after the closing date are normally not entertained."),
-        (f"Rozgar never charges candidates for a listing, an application or an introduction to an "
+        (f"RozgarJobs never charges candidates for a listing, an application or an introduction to an "
          f"employer. If anyone asks you for a fee, a registration charge or your bank details in "
          f"connection with this job, treat it as fraud and report it."),
         (f"Keep a copy of your submitted application, note the last date in your calendar, and "
@@ -1248,11 +1248,11 @@ def build_page(job, related):
                    if src_url else esc(job["source"]))
     rel_extra = ' nofollow' if job["source"] not in SCHEMA_OK else ""
 
-    # ── SEO strings: "{Job Title} — {Employer} — {City} | Rozgar"
+    # ── SEO strings: "{Job Title} — {Employer} — {City} | RozgarJobs"
     city = (job.get("location") or "").split(",")[0].strip() or "Pakistan"
-    seo_title = f'{job["title"]} — {job.get("company","")} — {city} | Rozgar'
+    seo_title = f'{job["title"]} — {job.get("company","")} — {city} | RozgarJobs'
     if len(seo_title) > 68:
-        seo_title = f'{job["title"][:44]} — {city} | Rozgar'
+        seo_title = f'{job["title"][:44]} — {city} | RozgarJobs'
 
     kw_parts = [job["title"], job.get("company"), city, "job", "jobs in pakistan",
                 job.get("category") or "", job.get("qualification") or "",
@@ -1263,8 +1263,8 @@ def build_page(job, related):
                 + (f'Qualification: {job["qualification"]}. ' if job.get("qualification") else "")
                 + (f'Age limit: {job["age_limit"]}. ' if job.get("age_limit") else "")
                 + (f'Last date: {job["last_date"]}. ' if job.get("last_date") else "")
-                + f'Apply on {job.get("source","Rozgar")}. '
-                + "Full eligibility, salary and application details on Rozgar — updated hourly.")
+                + f'Apply on {job.get("source","RozgarJobs")}. '
+                + "Full eligibility, salary and application details on RozgarJobs — updated hourly.")
 
     return PAGE.format(
         page_title=esc(seo_title),
@@ -1333,7 +1333,7 @@ LANDING_PAGE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39; &#39;unsafe-inline&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src &#39;self&#39; https: data:; font-src &#39;self&#39; data:; connect-src &#39;self&#39; https:; form-action &#39;self&#39; mailto:; base-uri &#39;self&#39;; object-src &#39;none&#39;">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>{title} ({count} Open) | Rozgar</title>
+<title>{title} 2026 — {count} Open Vacancies | RozgarJobs</title>
 <meta name="description" content="{desc}">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="{canonical}">
@@ -1348,8 +1348,8 @@ LANDING_PAGE = """<!DOCTYPE html>
 <header class="site-head">
   <div class="wrap head-in">
     <a class="brand" href="../index.html">
-      <span class="brand-mark">R</span>
-      <span class="brand-text"><strong>Rozgar</strong><small>Jobs in Pakistan</small></span>
+      <img class="brand-logo" src="../assets/img/mark.svg" alt="" width="38" height="38">
+      <span class="brand-text"><strong>Rozgar<span class="bj">Jobs</span></strong><small>Jobs in Pakistan</small></span>
     </a>
     <nav class="head-nav"><a href="../index.html">Jobs</a><a href="../alerts.html">Alerts</a><a href="../employers.html">Post a job</a></nav>
   </div>
@@ -1381,7 +1381,7 @@ LANDING_PAGE = """<!DOCTYPE html>
 
   <div class="notice-box" style="margin-top:28px">
     <strong>About this page</strong>
-    Rozgar collects these vacancies from official portals and public job boards. Every card links to the
+    RozgarJobs collects these vacancies from official portals and public job boards. Every card links to the
     original advertisement, so you always apply on the employer's own site. We never charge candidates —
     if someone asks you for a fee, report them to us.
   </div>
@@ -1396,7 +1396,7 @@ LANDING_PAGE = """<!DOCTYPE html>
 
 <footer class="site-foot" style="margin-top:40px">
   <div class="wrap foot-bottom">
-    <span>© {year} Rozgar</span>
+    <span>© {year} RozgarJobs</span>
     <span>Jobs in Pakistan, updated hourly</span>
   </div>
 </footer>
@@ -1507,7 +1507,7 @@ def build_intro(kind, name, f):
     """Unique opening copy: every sentence comes from this page's own numbers."""
     total, gov, priv = f["total"], f["gov"], f["priv"]
     label = "jobs" if kind == "city" else "vacancies"
-    p1 = f"<p class=\"lead\"><strong>{total:,} {name} {label}</strong> are open on Rozgar today: " \
+    p1 = f"<p class=\"lead\"><strong>{total:,} {name} {label}</strong> are open on RozgarJobs today: " \
          f"{priv:,} from private companies and {gov:,} from government departments and public bodies."
     if f["top_cats"]:
         p1 += " The largest share is in " + ", ".join(
@@ -1578,7 +1578,7 @@ def build_faqs(kind, name, f):
         qa.append((
             "How do I apply for these jobs?",
             "Open the job page and press the apply button. It takes you to the employer's own site, where you "
-            "complete the application. Rozgar does not collect CVs and never charges a fee."
+            "complete the application. RozgarJobs does not collect CVs and never charges a fee."
         ))
     return qa[:5]
 
@@ -1715,7 +1715,7 @@ def write_feed(jobs):
     </item>""" for j in latest)
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
-  <title>Rozgar — latest jobs</title>
+  <title>RozgarJobs — latest jobs</title>
   <link>{esc(SITE_URL or '/')}</link>
   <description>Remote and Pakistan jobs, updated hourly.</description>
   <language>en</language>
@@ -1786,11 +1786,42 @@ def write_sitemaps(jobs, landing_urls):
                 '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
                 + idx + "</sitemapindex>")
 
+    live_count = len([j for j in jobs if j["source"] in SCHEMA_OK])
+    llms = f"""# RozgarJobs
+> Free job board for Pakistan. Government, private and remote vacancies, updated every hour,
+> with the closing date, salary, qualification and age limit on every listing.
+
+Site: {base}/
+Language: English (en-PK)
+Jobs live now: {live_count}
+
+## Main pages
+- [All jobs]({base}/): search and filter every live vacancy
+- [Government jobs]({base}/): filter the Government toggle
+- [Job alerts]({base}/alerts.html): email and RSS alerts
+- [Post a job]({base}/employers.html): employer listings
+- [About]({base}/about.html) · [Contact]({base}/contact.html) · [Privacy]({base}/privacy.html) · [Terms]({base}/terms.html)
+
+## City pages
+""" + "".join(f"- [{c} jobs]({base}/jobs-in/{safe_slug(c)}.html)\n" for c in LANDING_CITIES
+              if os.path.exists(os.path.join(ROOT, "jobs-in", f"{safe_slug(c)}.html"))) + f"""
+## Category pages
+""" + "".join(f"- [{c}]({base}/category/{safe_slug(c)}.html)\n" for c in LANDING_CATS
+              if os.path.exists(os.path.join(ROOT, "category", f"{safe_slug(c)}.html"))) + f"""
+## Notes
+- Every job page links to the original advertisement; Rozgar is an index, not the employer.
+- We never charge candidates. Report a listing that asks for money.
+- Machine-readable feeds: [jobs.json]({base}/data/jobs.json) · [RSS]({base}/feed.xml) · [sitemap]({base}/sitemap.xml)
+"""
+    with open(os.path.join(ROOT, "llms.txt"), "w", encoding="utf-8") as f:
+        f.write(llms)
+
     with open(os.path.join(ROOT, "robots.txt"), "w", encoding="utf-8") as f:
         f.write("User-agent: *\nAllow: /\n\n"
                 "User-agent: GPTBot\nAllow: /\n\n"
                 "User-agent: Google-Extended\nAllow: /\n\n"
-                f"Sitemap: {base}/sitemap.xml\n")
+                f"Sitemap: {base}/sitemap.xml\n"
+                f"# LLM-friendly map: {base}/llms.txt\n")
     return len(chunks)
 
 

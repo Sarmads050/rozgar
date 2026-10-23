@@ -797,3 +797,10 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
   .job-card.poster-card .job-title { font-size: 12.4px; }
   .job-card.poster-card .job-company { font-size: 10.6px; margin-top: 1px; }
 }
+
+
+/* ── brand lockup ─────────────────────────────────────────── */
+.brand-logo { display: block; width: 38px; height: 38px; border-radius: 10px; flex: 0 0 auto; }
+.brand-text strong { letter-spacing: -.7px; }
+.brand-text .bj { color: var(--gold); }
+@media (max-width: 640px) { .brand-logo { width: 34px; height: 34px; border-radius: 9px; } }

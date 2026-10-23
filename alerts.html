@@ -5,15 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self' https:; form-action 'self' mailto:; base-uri 'self'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Job Alerts — New Jobs by Email or WhatsApp | Rozgar</title>
+<title>Job Alerts — New Jobs by Email or WhatsApp | RozgarJobs</title>
 <meta name="description" content="Free job alerts for Pakistan. Get government and private jobs by email or WhatsApp as soon as they are posted. Choose your city, category and keywords.">
 <meta name="theme-color" content="#0f2a47">
 <link rel="canonical" href="https://sarmads050.github.io/rozgar/alerts.html">
-<meta property="og:title" content="Job Alerts — email and WhatsApp | Rozgar">
+<meta property="og:title" content="Job Alerts — email and WhatsApp | RozgarJobs">
 <meta property="og:description" content="New jobs in Pakistan, delivered free.">
+<meta property="og:image" content="https://sarmads050.github.io/rozgar/assets/img/og.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://sarmads050.github.io/rozgar/alerts.html">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f2a47'/%3E%3Cpath d='M20 17h9v13l11-13h10L37 32l14 15H40L29 34v13h-9z' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="assets/img/mark.svg">
+<link rel="apple-touch-icon" href="assets/img/mark.svg">
 <link rel="stylesheet" href="assets/css/style.css">
 <style>
   .al-hero { padding: 34px 0 6px; }
@@ -52,8 +54,8 @@
 <header class="site-head">
   <div class="wrap head-in">
     <a class="brand" href="index.html">
-      <span class="brand-mark">R</span>
-      <span class="brand-text"><strong>Rozgar</strong><small>Jobs in Pakistan</small></span>
+      <img class="brand-logo" src="assets/img/mark.svg" alt="" width="38" height="38">
+      <span class="brand-text"><strong>Rozgar<span class="bj">Jobs</span></strong><small>Jobs in Pakistan</small></span>
     </a>
     <nav class="head-nav">
       <a href="index.html">Jobs</a>
@@ -65,7 +67,7 @@
 
 <section class="wrap al-hero">
   <h1>Get new jobs in your inbox or on WhatsApp</h1>
-  <p>Rozgar checks for new jobs every hour. Set up an alert once and we will only send
+  <p>RozgarJobs checks for new jobs every hour. Set up an alert once and we will only send
      the jobs that match your city, field and keywords.</p>
 </section>
 
@@ -117,7 +119,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.1-.7.2s-.7 1-.9 1.2c-.2.2-.3.2-.6.1-1.7-.9-2.9-1.6-4-3.6-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5s-.7-1.6-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 1.9.8 2.6.9 3.5.7.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.5-.3z"/><path d="M12 2a10 10 0 0 0-8.5 15.3L2 22l4.8-1.4A10 10 0 1 0 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-2.9.8.8-2.8-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
       </div>
       <h2>WhatsApp</h2>
-      <p>Follow the Rozgar channel. Every new job arrives as a poster with the apply link — one tap away.</p>
+      <p>Follow the RozgarJobs channel. Every new job arrives as a poster with the apply link — one tap away.</p>
 
       <div class="pills">
         <span class="pill">Follow-only channel</span>
@@ -156,7 +158,7 @@
     <h2>Common questions</h2>
     <details open>
       <summary>Are the alerts free?</summary>
-      <p>Yes. Rozgar never charges candidates — not for alerts, not for applications.</p>
+      <p>Yes. RozgarJobs never charges candidates — not for alerts, not for applications.</p>
     </details>
     <details>
       <summary>How many emails will I get?</summary>
@@ -179,7 +181,7 @@
 
 <footer class="site-foot">
   <div class="wrap foot-bottom">
-    <span>© <span id="yr">2026</span> Rozgar</span>
+    <span>© <span id="yr">2026</span> RozgarJobs</span>
     <span>Jobs in Pakistan, updated every hour</span>
   </div>
 </footer>
@@ -225,7 +227,7 @@
     const body = 'SUBSCRIBE ROZGAR ALERTS\nEmail: ' + email + '\nCity: ' + city + '\nKeywords: ' + kw;
     try { localStorage.setItem('rozgar-sub', JSON.stringify({ email, city, kw })); } catch (err) {}
     location.href = 'mailto:' + to +
-      '?subject=' + encodeURIComponent('SUBSCRIBE: Rozgar job alerts') +
+      '?subject=' + encodeURIComponent('SUBSCRIBE: RozgarJobs job alerts') +
       '&body=' + encodeURIComponent(body);
   });
 

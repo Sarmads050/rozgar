@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rozgar — job poster generator (v2)
+RozgarJobs — job poster generator (v2)
 ==================================
 Every listing gets its own designed poster, generated from the structured facts
 we extracted. We never copy another site's ad creative.
@@ -349,8 +349,8 @@ def render_poster(job, out_path, site_url="", source_line=""):
 
     # ── header
     brand_mark(img, d, M, 52, 56, fg="#ffffff", bg=accent)
-    d.text((M + 72, 54), "ROZGAR", font=F(32, "900"), fill=text_main)
-    d.text((M + 72, 92), "Pakistan Jobs Portal", font=F(18, "600"), fill=text_mut)
+    d.text((M + 72, 54), "ROZGARJOBS", font=F(32, "900"), fill=text_main)
+    d.text((M + 72, 92), "Jobs in Pakistan · updated daily", font=F(18, "600"), fill=text_mut)
 
     label = {"government": "GOVERNMENT JOB", "private": "PRIVATE SECTOR",
              "remote": "REMOTE JOB", "internship": "INTERNSHIP",
@@ -502,7 +502,7 @@ def render_poster(job, out_path, site_url="", source_line=""):
     # ── footer
     d.line([M, H - 92, W - M - 40, H - 92], fill=line_col, width=2)
     d.text((M, H - 74), "Full details, documents & apply link:", font=F(18, "600"), fill=text_mut)
-    d.text((M, H - 46), (site_url or "rozgar.pk"), font=F(23, "900"), fill=text_main)
+    d.text((M, H - 46), (site_url or "rozgarjobs.com"), font=F(23, "900"), fill=text_main)
     if source_line:
         sf = fit(d, source_line, 16, "600", 360)
         sw = d.textlength(source_line, font=sf)
@@ -535,8 +535,8 @@ def render_og(job, out_path, site_url=""):
     text_mut = "#c8d6d2" if on_dark else "#5c6b70"
 
     brand_mark(img, d, M, 44, 44, fg="#ffffff", bg=accent)
-    d.text((M + 58, 46), "ROZGAR", font=F(26, "900"), fill=text_main)
-    d.text((M + 58, 76), "Pakistan Jobs Portal", font=F(15, "600"), fill=text_mut)
+    d.text((M + 58, 46), "ROZGARJOBS", font=F(26, "900"), fill=text_main)
+    d.text((M + 58, 76), "Jobs in Pakistan · updated daily", font=F(15, "600"), fill=text_mut)
 
     label = {"government": "GOVERNMENT JOB", "private": "PRIVATE SECTOR",
              "remote": "REMOTE JOB", "internship": "INTERNSHIP",
