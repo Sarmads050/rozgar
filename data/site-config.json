@@ -1,0 +1,15 @@
+{
+  "_readme": "Rozgar ki site-wide settings. Ismein sirf woh cheezein hain jo owner ko badalni padti hain — baqi sab code se aata hai.",
+  "site_url": "https://rozgar.pk",
+  "alerts": {
+    "email_form_url": "",
+    "whatsapp_channel_url": "",
+    "whatsapp_group_url": "",
+    "rss_feed": "feed.xml"
+  },
+  "contact_email": "",
+  "social": {
+    "facebook": "",
+    "x": ""
+  }
+}

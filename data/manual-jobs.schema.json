@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Rozgar manual job",
+  "description": "Ek local/employer job. data/manual-jobs.json ek array hai in objects ka. Sirf title aur company lazmi hain; baqi jitna bharein ge, poster aur detail page utna behtar banega.",
+  "type": "object",
+  "required": ["title", "company"],
+  "additionalProperties": true,
+  "properties": {
+    "title": { "type": "string", "minLength": 3, "maxLength": 140, "description": "Job ka asli title, jaise 'Assistant Manager Finance'. BPS ho to sath likhein: 'Stenographer (BPS-14)'." },
+    "company": { "type": "string", "minLength": 2, "maxLength": 90, "description": "Employer ka naam. Poster card ke liye chhota rakhein." },
+    "employer_display": { "type": "string", "maxLength": 140, "description": "Poora official naam jo detail page par dikhega, jaise 'Ministry of Information Technology & Telecom'." },
+    "location": { "type": "string", "description": "Shehar, province ya 'Remote — Pakistan'. Default: Pakistan.", "default": "Pakistan" },
+    "remote": { "type": "boolean", "default": false, "description": "Ghar se kaam (WFH)? true likhein." },
+    "type": {
+      "type": "string",
+      "enum": ["Full Time", "Part Time", "Contract", "Temporary", "Internship", "Freelance"],
+      "default": "Full Time"
+    },
+    "sector": {
+      "type": "string",
+      "enum": ["government", "private", "contract", "internship", "remote"],
+      "description": "Poster ka colour scheme isi se chunta hai."
+    },
+    "category": { "type": "string", "description": "Khali chhorein to title se khud detect ho jati hai." },
+    "level": { "type": "string", "description": "Junior / Mid / Senior / Lead — ya khali." },
+    "qualification": { "type": "string", "maxLength": 120, "description": "Jaise 'MBA / M.Com' ya 'Matric'. Poster ke JOB DETAILS grid mein aata hai." },
+    "experience": { "type": "string", "maxLength": 60, "description": "Jaise '3 years' ya 'Fresh graduate'." },
+    "age_limit": { "type": "string", "maxLength": 40, "description": "Jaise '18–30 years'." },
+    "vacancies": { "type": ["integer", "string"], "description": "Kitni posts hain. '03' ya 3 — dono chalega." },
+    "bps": { "type": "string", "maxLength": 20, "description": "Government grade, jaise 'BPS-17'." },
+    "salary": { "type": "string", "maxLength": 90, "description": "Jo dikhana hai, wahi likhein: 'PKR 90,000 – 130,000 / month'." },
+    "salary_min": { "type": "number", "description": "Google for Jobs ke liye — sirf number." },
+    "salary_max": { "type": "number" },
+    "salary_currency": { "type": "string", "default": "PKR" },
+    "salary_period": { "type": "string", "enum": ["hour", "day", "week", "month", "year"], "default": "month" },
+    "posted": { "type": "string", "format": "date", "description": "YYYY-MM-DD. Default: aaj." },
+    "last_date": { "type": "string", "format": "date", "description": "YYYY-MM-DD. Guzar jaye to job khud hat jati hai." },
+    "how_to_apply": { "type": "string", "maxLength": 400, "description": "Apply karne ka tareeqa — poster ke 'HOW TO APPLY' box mein chhapta hai." },
+    "apply_url": { "type": "string", "format": "uri", "description": "Online apply ka link (form, portal, ya employer ki site)." },
+    "contact_email": { "type": "string", "format": "email" },
+    "description": { "type": "string", "minLength": 60, "description": "Job ki tafseel. 100+ words best — Google isi ko rank karta hai." },
+    "tags": { "type": "array", "items": { "type": "string" }, "maxItems": 8 },
+    "company_logo": { "type": "string", "description": "Logo ka URL (optional)." },
+    "source_url": { "type": "string", "format": "uri", "description": "Agar job kisi aur site se li gayi hai to original ad ka link — attribution ke liye." },
+    "employer_submitted": { "type": "boolean", "default": false, "description": "true = employer ne khud bheja (site par 'Employer' dikhega)." }
+  }
+}

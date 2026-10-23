@@ -1,0 +1,105 @@
+name: Refresh jobs & deploy site
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "15 * * * *"      # every hour at :15 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write             # alert state ko wapas commit karne ke liye
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    # Alert-state commit ek bot commit hai — us se loop na bane.
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Work out the public URL first so canonical links, sitemap and the
+      # JobPosting markup all point at the live site.
+      - name: Work out the site URL
+        id: site
+        run: |
+          if [ "${{ github.event.repository.name }}" = "${{ github.repository_owner }}.github.io" ]; then
+            echo "url=https://${{ github.repository_owner }}.github.io" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Jobs are fetched fresh on every run. Nothing is committed back except the
+      # tiny alert state file, so the repository stays small.
+      - name: Install poster dependencies
+        run: pip install --quiet pillow "qrcode[pil]"
+
+      - name: Fetch jobs, build pages & render posters
+        env:
+          SITE_URL: ${{ steps.site.outputs.url }}
+          PK_LIMIT: "90"
+          POSTER_LIMIT: "400"
+        run: python scripts/fetch_jobs.py
+
+      # ── Job alerts: email + WhatsApp ────────────────────────────────────
+      # Secrets optional hain. Kuch set na ho to step khud hi skip ho jata hai.
+      - name: Send job alerts
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ steps.site.outputs.url }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_FROM_EMAIL: ${{ secrets.ALERT_FROM_EMAIL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SUBSCRIBERS_CSV: ${{ secrets.SUBSCRIBERS_CSV }}
+          WHATSAPP_APIKEY: ${{ secrets.WHATSAPP_APIKEY }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+        run: python scripts/send_alerts.py
+
+      - name: Save alert state
+        continue-on-error: true
+        run: |
+          if [ -f .alerts-state.json ]; then
+            git config user.name  "rozgar-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git add .alerts-state.json
+            git diff --cached --quiet || git commit -m "chore: update alert state [skip ci]"
+            git push
+          fi
+
+      # ── Bing / ChatGPT search ko naye pages ki khabar (optional) ────────
+      - name: Ping IndexNow
+        continue-on-error: true
+        env:
+          SITE_URL: ${{ steps.site.outputs.url }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: python scripts/ping_indexnow.py
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4

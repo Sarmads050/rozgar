@@ -1,0 +1,3 @@
+# only needed for poster rendering (the site itself is plain HTML/CSS/JS)
+pillow>=10.0
+qrcode[pil]>=7.4

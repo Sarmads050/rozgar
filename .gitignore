@@ -1,0 +1,26 @@
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# generated at build time (rebuilt by the Action every hour)
+/jobs/
+/posters/
+/jobs-in/
+/category/
+/sitemap-jobs-*.xml
+/sitemap-pages.xml
+/sitemap-images.xml
+/data/jobs.json
+/feed.xml
+/sitemap.xml
+/robots.txt
+/data/submissions.csv
+
+# alert bot state — ye commit hota hai (ignore nahi)
+!.alerts-state.json
