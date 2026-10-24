@@ -41,7 +41,7 @@
   <nav class="crumbs"><a href="../index.html">Home</a> <span>/</span> <a href="index.html">Guides</a> <span>/</span> <span>BPS pay scales</span></nav>
 
 <style>
-  .doc { padding: 26px 0 10px; max-width: 78ch; }
+  .doc { padding-top: 26px; padding-bottom: 10px; max-width: 78ch; }
   .doc h1 { font-size: clamp(25px, 3.2vw, 36px); letter-spacing: -1px; margin: 8px 0 10px; line-height: 1.15; }
   .doc .lede { color: var(--muted); font-size: 16px; margin: 0 0 20px; }
   .doc h2 { font-size: 19px; letter-spacing: -.35px; margin: 28px 0 8px; }
@@ -58,6 +58,13 @@
   .next { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
   .next a { font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); text-decoration: none; }
   .cards { display: grid; gap: 12px; margin: 20px 0 10px; }
+  .doc .gcard, .doc .gcard:hover { text-decoration: none; }
+  .doc .gcard strong { text-decoration: none; }
+  .doc .gcard span { text-decoration: none; }
+  @media (max-width: 720px) {
+    .head-nav { display: none; }
+    .doc { padding-top: 18px; }
+  }
   .gcard { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 13px;
     padding: 16px 18px; text-decoration: none; transition: border-color .15s, transform .15s; }
   .gcard:hover { border-color: var(--brand); transform: translateY(-1px); }
