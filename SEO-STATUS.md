@@ -21,7 +21,7 @@ Generated 2026-10-24 by `scripts/seo_report.py`. Run it before every change so y
 | Job pages Google is allowed to index | 291 of 348 (152 Pakistani) | ✅ |
 | Pages in the job sitemap | 291 | ✅ |
 | Landing + guide pages in the sitemap | 61 | ✅ |
-| Poster images in the image sitemap | 128 | ✅ |
+| Poster images in the image sitemap | 68 | ✅ |
 | Jobs visible without JavaScript | 24 cards on the home page | ✅ |
 | Home page canonical + structured data | both present | ✅ |
 | Invalid JSON-LD on sampled job pages | 0 of 40 | ✅ |

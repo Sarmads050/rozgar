@@ -24,6 +24,7 @@ prominent "Apply on <source>" link.
 """
 
 import csv
+from collections import Counter
 import hashlib
 import glob
 import html
@@ -2647,6 +2648,40 @@ def write_locations_page():
 
 
 
+def _previous_jobs(jobs_path):
+    """Last build's job list.
+
+    In CI data/jobs.json is gitignored, so the file is never there at the start of
+    a run — which silently disabled this whole safety net in production. The
+    previous build is still served by GitHub Pages, so read it from there instead.
+    No storage cost, no repo history bloat, and it is the exact list that was live
+    an hour ago.
+    """
+    try:
+        with open(jobs_path, encoding="utf-8") as fh:
+            rows = json.load(fh).get("jobs", [])
+        if rows:
+            print(f"     carry-forward: {len(rows)} jobs from the local build")
+            return rows
+    except (OSError, ValueError):
+        pass
+
+    base = (SITE_URL or "").rstrip("/")
+    if not base:
+        return []
+    url = f"{base}/data/jobs.json"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA,
+                                                   "Cache-Control": "no-cache"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            rows = json.load(r).get("jobs", [])
+        print(f"     carry-forward: {len(rows)} jobs from the live build")
+        return rows
+    except Exception as e:  # noqa: BLE001
+        print(f"     carry-forward: no previous build ({type(e).__name__})")
+        return []
+
+
 def carry_forward(jobs, jobs_path):
     """Keep yesterday's still-open jobs when a source fails today.
 
@@ -2657,40 +2692,67 @@ def carry_forward(jobs, jobs_path):
     if today's harvest is much smaller than yesterday's, the missing jobs that
     are still within their closing date stay on the site for one more run.
     """
-    try:
-        with open(jobs_path, encoding="utf-8") as fh:
-            old = json.load(fh).get("jobs", [])
-    except (OSError, ValueError):
-        return jobs, 0
-
-    if len(old) < 40 or len(jobs) >= len(old) * 0.75:
+    old = _previous_jobs(jobs_path)
+    if not old:
         return jobs, 0
 
     today = datetime.now(timezone.utc).date().isoformat()
+    kept = 0
     have = {j.get("slug") for j in jobs}
     have_key = {(re.sub(r"[^a-z0-9]", "", (j.get("title") or "").lower())[:40],
                  (j.get("company") or "").lower()) for j in jobs}
-    kept = 0
-    for j in old:
+
+    def still_open(j):
+        last = j.get("last_date") or ""
+        if last:
+            return last >= today          # genuinely closed → let it go
+        try:
+            age = (time.time() - int(j.get("published") or 0)) / 86400
+        except (TypeError, ValueError):
+            age = 999
+        return age <= KEEP_DAYS
+
+    def take(j):
+        nonlocal kept
         if j.get("slug") in have:
-            continue
+            return False
         key = (re.sub(r"[^a-z0-9]", "", (j.get("title") or "").lower())[:40],
                (j.get("company") or "").lower())
         if key in have_key:
-            continue
+            return False
         have_key.add(key)
-        last = j.get("last_date") or ""
-        if last and last < today:
-            continue          # genuinely closed — let it go
-        if not last:
-            try:
-                age = (time.time() - int(j.get("published") or 0)) / 86400
-            except (TypeError, ValueError):
-                age = 999
-            if age > KEEP_DAYS:
-                continue
+        if not still_open(j):
+            return False
         jobs.append(j)
         kept += 1
+        return True
+
+    # ── 1. whole-run guard: the build came back far smaller than the live site
+    if len(old) >= 40 and len(jobs) < len(old) * 0.75:
+        for j in old:
+            take(j)
+        print(f"     carry-forward: whole run short → kept {kept} job(s)")
+
+    # ── 2. per-source guard: one board timed out, the rest are fine
+    #    This is the common case. ilmkidunya or NJP failing for an hour used to
+    #    wipe ~60 Pakistani pages without the total dropping enough to notice.
+    now_by_src, old_by_src = Counter(), Counter()
+    for j in jobs:
+        now_by_src[j.get("source")] += 1
+    for j in old:
+        old_by_src[j.get("source")] += 1
+    topped = 0
+    for src, n_old in old_by_src.items():
+        if n_old < 15:
+            continue
+        if now_by_src.get(src, 0) >= n_old * 0.6:
+            continue
+        for j in old:
+            if j.get("source") == src and take(j):
+                topped += 1
+        if topped:
+            print(f"     carry-forward: {src} returned "
+                  f"{now_by_src.get(src, 0)}/{n_old} → restored {topped}")
     return jobs, kept
 
 

@@ -1,6 +1,6 @@
 # RozgarJobs — full job corpus (348 vacancies)
 
-Source: https://sarmads050.github.io/rozgar/  ·  Rebuilt 2026-10-24 10:22 UTC
+Source: https://sarmads050.github.io/rozgar/  ·  Rebuilt 2026-10-24 10:32 UTC
 Vacancies: 348 total, 291 indexable, 147 government, 157 in Pakistan.
 
 Each block below is one vacancy. Quote the block as it stands; the closing date is the
