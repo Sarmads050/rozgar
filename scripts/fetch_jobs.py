@@ -1032,6 +1032,7 @@ PAGE = """<!DOCTYPE html>
 <link rel="stylesheet" href="../assets/css/style.css">
 {jsonld}
 <script src="assets/js/analytics.js" defer></script>
+<link rel="alternate" type="application/atom+xml" title="RozgarJobs new jobs" href="../feed.xml">
 </head>
 <body class="job-page">
 <header class="site-head">
@@ -1118,6 +1119,10 @@ PAGE = """<!DOCTYPE html>
     original job board. We never ask for money, registration fees or bank details.
     If a listing looks suspicious, report it.
   </p>
+  <section style="margin:30px 0 0">
+    <h2 style="font-size:16px;margin:0 0 10px">Browse more jobs</h2>
+    <div class="tag-list" style="display:flex;flex-wrap:wrap;gap:7px">{browse_links}</div>
+  </section>
 </main>
 
 {sticky_bar}
@@ -1394,7 +1399,57 @@ def landing_cat_set(jobs):
             if sum(1 for j in jobs if (j.get("category") or "") == c) >= 5}
 
 
-def build_page(job, related):
+
+def job_browse_links(job, city_pages, cat_pages):
+    """Links a reader (and a crawler) can follow from every job page.
+
+    Job pages are the pages Google finds first — they are the ones in the
+    sitemap and the ones people share. Those internal links are what push
+    authority into the city, category and commission pages that need to rank
+    for "jobs in lahore", "teaching jobs" and "fpsc jobs".
+    """
+    links = []
+    city = (job.get("location") or "").split(",")[0].strip()
+    if city and city.lower() not in ("pakistan", "remote", ""):
+        slug = safe_slug(city)
+        if slug in city_pages:
+            links.append((f"../jobs-in/{slug}.html", f"Jobs in {city}"))
+    cat = job.get("category")
+    if cat:
+        slug = safe_slug(cat)
+        if slug in cat_pages:
+            links.append((f"../category/{slug}.html", f"{cat} jobs"))
+
+    blob = f"{job.get('title','')} {job.get('category','')} {job.get('company','')}".lower()
+    for slug, label, needles in (
+            ("sarkari-naukri", "Sarkari naukri", ("government",)),
+            ("teaching-jobs", "Teaching jobs", ("teach", "lectur", "educat", "school")),
+            ("health-jobs", "Health jobs", ("nurse", "medical", "doctor", "lab", "hospital")),
+            ("bank-jobs", "Bank jobs", ("bank",)),
+            ("police-jobs", "Police jobs", ("police", "constable", "fia", "ranger")),
+            ("pak-army-jobs", "Army / PAF / Navy", ("army", "paf", "navy", "air force", "soldier")),
+            ("nts-jobs", "NTS jobs", ("nts",)),
+            ("fpsc-jobs", "FPSC jobs", ("fpsc", "federal public service")),
+            ("ppsc-jobs", "PPSC jobs", ("ppsc", "punjab public service"))):
+        if any(n in blob for n in needles):
+            links.append((f"../{slug}.html", label))
+
+    if job.get("sector") == "government":
+        links.append(("../sarkari-naukri.html", "All government jobs"))
+    if job.get("bps"):
+        links.append(("../guides/bps-pay-scales.html", "BPS pay scales explained"))
+    links.append(("../locations.html", "All cities and categories"))
+
+    seen, out = set(), []
+    for href, label in links:
+        if href in seen:
+            continue
+        seen.add(href)
+        out.append(f'<a class="chip" href="{href}">{esc(label)}</a>')
+    return "".join(out[:10])
+
+
+def build_page(job, related, city_pages=frozenset(), cat_pages=frozenset()):
     cat_q = urllib.parse.quote(job["category"])
     city_name = (job.get("location") or "").split(",")[0].strip()
     city_slug = safe_slug(city_name) if city_name else ""
@@ -1540,6 +1595,7 @@ def build_page(job, related):
         cat_crumb=cat_crumb,
         sticky_bar=sticky,
         year=datetime.now().year,
+        browse_links=job_browse_links(job, city_pages, cat_pages),
     )
 
 
@@ -1577,6 +1633,7 @@ LANDING_PAGE = """<!DOCTYPE html>
 <link rel="stylesheet" href="../assets/css/style.css">
 {json_ld}
 <script src="../assets/js/analytics.js" defer></script>
+<link rel="alternate" type="application/atom+xml" title="RozgarJobs new jobs" href="../feed.xml">
 </head>
 <body>
 <header class="site-head">
@@ -2070,6 +2127,7 @@ KEYWORD_PAGE = """<!DOCTYPE html>
   .faq-block p {{ color:var(--muted); font-size:14px; margin:8px 0 0; line-height:1.6; }}
 </style>
 <script src="assets/js/analytics.js" defer></script>
+<link rel="alternate" type="application/atom+xml" title="RozgarJobs new jobs" href="./feed.xml">
 </head>
 <body>
 <header class="site-head">
@@ -2577,6 +2635,131 @@ def write_locations_page():
     return len(city_rows) + len(cat_rows) + len(guide_rows)
 
 
+
+
+def carry_forward(jobs, jobs_path):
+    """Keep yesterday's still-open jobs when a source fails today.
+
+    Job boards break. Pakistani boards break often — a timeout, a rate limit, a
+    Cloudflare challenge. Without this guard a bad hourly run would publish a
+    site with a third of the jobs and delete hundreds of pages Google has
+    already indexed. Mass 404s are the fastest way to lose rankings, so instead:
+    if today's harvest is much smaller than yesterday's, the missing jobs that
+    are still within their closing date stay on the site for one more run.
+    """
+    try:
+        with open(jobs_path, encoding="utf-8") as fh:
+            old = json.load(fh).get("jobs", [])
+    except (OSError, ValueError):
+        return jobs, 0
+
+    if len(old) < 40 or len(jobs) >= len(old) * 0.75:
+        return jobs, 0
+
+    today = datetime.now(timezone.utc).date().isoformat()
+    have = {j.get("slug") for j in jobs}
+    have_key = {(re.sub(r"[^a-z0-9]", "", (j.get("title") or "").lower())[:40],
+                 (j.get("company") or "").lower()) for j in jobs}
+    kept = 0
+    for j in old:
+        if j.get("slug") in have:
+            continue
+        key = (re.sub(r"[^a-z0-9]", "", (j.get("title") or "").lower())[:40],
+               (j.get("company") or "").lower())
+        if key in have_key:
+            continue
+        have_key.add(key)
+        last = j.get("last_date") or ""
+        if last and last < today:
+            continue          # genuinely closed — let it go
+        if not last:
+            try:
+                age = (time.time() - int(j.get("published") or 0)) / 86400
+            except (TypeError, ValueError):
+                age = 999
+            if age > KEEP_DAYS:
+                continue
+        jobs.append(j)
+        kept += 1
+    return jobs, kept
+
+
+def write_home_snapshot(jobs, limit=24):
+    """Paint the first screen of the feed into index.html.
+
+    The home page used to render every card from data/jobs.json in the browser:
+    593 KB of JSON plus a JS parse before a single vacancy appeared. Google can
+    run that, but it costs crawl budget and every visitor waits. Writing the
+    first two dozen cards as static HTML means the content exists in the
+    document itself — and app.js simply re-renders the same list when the
+    filters are touched.
+    """
+    path = os.path.join(ROOT, "index.html")
+    if not os.path.exists(path):
+        return
+    with open(path, encoding="utf-8") as fh:
+        html = fh.read()
+    start_marker, end_marker = "<!-- feed:start", "<!-- feed:end -->"
+    if start_marker not in html or end_marker not in html:
+        return
+
+    today = datetime.now(timezone.utc).date().isoformat()
+    live = [j for j in jobs
+            if j.get("is_pk") and (not j.get("last_date") or j["last_date"] >= today)]
+    live.sort(key=lambda j: (j.get("last_date") or "9999", -(j.get("published") or 0)))
+    rows = live[:limit]
+
+    def card(j):
+        title = j.get("display_title") or j.get("title") or ""
+        initials = (j.get("company") or "?")[:2].upper()
+        chips = []
+        if j.get("last_date"):
+            chips.append(f'<span class="chip chip-date">Apply by {esc(human_date(to_ts(j["last_date"])))}</span>')
+        if j.get("qualification"):
+            chips.append(f'<span class="chip">{esc(one_line(j["qualification"], 26))}</span>')
+        if j.get("age_limit"):
+            chips.append(f'<span class="chip">Age {esc(j["age_limit"])}</span>')
+        if j.get("sector") == "government":
+            chips.append('<span class="chip chip-gov">Government</span>')
+        return (
+            '<article class="job-card">'
+            '<a class="logo" href="jobs/' + esc(j["slug"]) + '.html" aria-hidden="true" tabindex="-1">'
+            + esc(initials) + '</a>'
+            '<div class="job-info">'
+            '<h3 class="job-title"><a href="jobs/' + esc(j["slug"]) + '.html">' + esc(title) + '</a></h3>'
+            '<p class="job-company"><b>' + esc(j.get("company") or "") + '</b>'
+            + (" · " + esc(j["location"]) if j.get("location") else "") + '</p>'
+            '<div class="chips">' + "".join(chips) + '</div>'
+            '</div>'
+            '<div class="job-side"><span class="time">' + esc(ago_text(j.get("published"))) + '</span>'
+            '<a class="apply" href="jobs/' + esc(j["slug"]) + '.html">Details →</a></div>'
+            '</article>')
+
+    snapshot = "\n".join(card(j) for j in rows)
+
+    # the status strip is the first thing on the page — never leave it saying
+    # "Loading jobs…" for crawlers or no-JS visitors
+    html = re.sub(r'<span id="topStatus">[^<]*</span>',
+                  f'<span id="topStatus">{len(live)} jobs · updated hourly</span>', html, count=1)
+
+    # the tab counts are the numbers a visitor reads first; paint them too
+    remote_n = sum(1 for j in jobs if j.get("remote"))
+    intl_n = sum(1 for j in jobs if not j.get("is_pk") and not j.get("remote"))
+    for dom_id, value in (("scPk", len(live)), ("scRemote", remote_n),
+                          ("scIntl", intl_n), ("scAll", len(jobs))):
+        html = re.sub(rf'(<span id="{dom_id}">)[^<]*(</span>)',
+                      rf'\g<1>{value}\g<2>', html, count=1)
+
+    start = html.index(start_marker)
+    start = html.index("-->", start) + 3
+    end = html.index(end_marker)
+    new_html = html[:start] + "\n" + snapshot + "\n      " + html[end:]
+    if new_html != html:
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(new_html)
+    print(f"     {'':12s} {len(rows):4d} static cards on the home page")
+
+
 def write_feed(jobs):
     latest = jobs[:50]
     items = "".join(f"""
@@ -2611,9 +2794,20 @@ def write_sitemaps(jobs, landing_urls):
 
     for i in range(0, len(indexable), per_file):
         part = indexable[i:i + per_file]
+        # lastmod must reflect when the page actually changed. Stamping every
+        # URL with today's date teaches Google to ignore the field entirely.
+        def stamp(j):
+            ts = j.get("published") or j.get("updated")
+            if not ts:
+                return now_iso
+            try:
+                return datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d")
+            except (TypeError, ValueError, OSError):
+                return now_iso
+
         body = "".join(
             f"<url><loc>{esc(base)}/jobs/{esc(j['slug'])}.html</loc>"
-            f"<lastmod>{now_iso}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>"
+            f"<lastmod>{stamp(j)}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>"
             for j in part)
         name = f"sitemap-jobs-{i // per_file + 1}.xml"
         with open(os.path.join(ROOT, name), "w", encoding="utf-8") as f:
@@ -2879,6 +3073,16 @@ def main():
         "categories": {c: sum(1 for j in jobs if j["category"] == c) for c in CATEGORIES},
         "sources": sorted({j["source"] for j in jobs}),
     }
+    # ── safety net: never publish a gutted site because a source failed
+    jobs, carried = carry_forward(jobs, JOBS_JSON)
+    if carried:
+        print(f"     {'':12s} {carried:4d} still-open jobs carried over (a source failed)")
+        jobs.sort(key=lambda j: (j.get("is_pk", False), -(j.get("published") or 0)), reverse=True)
+        meta["count"] = len(jobs)
+        meta["pak_friendly"] = sum(1 for j in jobs if j.get("pak_friendly"))
+        meta["categories"] = {c: sum(1 for j in jobs if j["category"] == c) for c in CATEGORIES}
+        meta["sources"] = sorted({j["source"] for j in jobs})
+
     # (jobs.json is written after posters, so poster paths land in the payload)
     page_descriptions = {j["id"]: {k: j.get(k, "") for k in ("description_text", "description_html")}
                          for j in jobs}
@@ -2922,7 +3126,8 @@ def main():
     for j in jobs[:MAX_PAGES]:
         related = [r for r in by_cat.get(j["category"], []) if r["slug"] != j["slug"]][:3]
         with open(os.path.join(JOB_DIR, f"{j['slug']}.html"), "w", encoding="utf-8") as f:
-            f.write(build_page(j, related))
+            f.write(build_page(j, related,
+                               set(CITY_PAGES), set(CAT_PAGES)))
         pages += 1
 
     # keep descriptions in memory (posters use them) but out of the JSON payload
@@ -2936,6 +3141,7 @@ def main():
     kw_urls = build_keyword_pages(jobs, landing_urls)
     kw_urls += build_commission_pages(jobs, SITE_URL or "")
     landing_urls = landing_urls + kw_urls
+    write_home_snapshot(jobs)
     write_feed(jobs)
     n_loc = write_locations_page()
     print(f"     {'':12s} {n_loc:4d} location links")

@@ -238,6 +238,10 @@ function render() {
   const list = $("#jobList");
   const slice = state.filtered.slice(0, state.shown);
   list.innerHTML = slice.map(cardHTML).join("");
+  /* the build writes the first two dozen cards into the HTML, so the
+     loading shims must never cover real content */
+  const sk = $("#skeleton");
+  if (sk && list.children.length) sk.remove();
 
   $("#resultsMeta").textContent =
     `${state.filtered.length} ${state.filtered.length === 1 ? "job" : "jobs"}` +
@@ -630,12 +634,16 @@ async function boot() {
     if (!state.jobs.length) throw new Error("no jobs");
   } catch (err) {
     console.error(err);
-    $("#skeleton").innerHTML =
-      '<div class="empty"><strong>Jobs could not be loaded.</strong><span>Open the site through a web server (GitHub Pages), not by double-clicking the file.</span></div>';
+    const sk0 = $("#skeleton");
+    if (sk0) {
+      sk0.innerHTML =
+        '<div class="empty"><strong>Jobs could not be loaded.</strong><span>Open the site through a web server (GitHub Pages), not by double-clicking the file.</span></div>';
+    }
     return;
   }
 
-  $("#skeleton").remove();
+  const skLoaded = $("#skeleton");
+  if (skLoaded) skLoaded.remove();
   renderStats();
   render();
   renderPkStrip();

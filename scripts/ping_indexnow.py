@@ -18,6 +18,8 @@ Agar key set na ho to script chup-chaap skip ho jaati hai.
 from __future__ import annotations
 
 import json
+import pathlib
+import re
 import os
 import sys
 import urllib.request
@@ -25,7 +27,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE_URL = (os.environ.get("SITE_URL") or "https://rozgar.pk").rstrip("/")
-KEY = (os.environ.get("INDEXNOW_KEY") or "").strip()
+def _key_from_repo():
+    """The key file lives in the repo root (it has to be public anyway), so the
+    secret is optional — the filename IS the key."""
+    root = pathlib.Path(__file__).resolve().parent.parent
+    for f in root.glob("*.txt"):
+        stem = f.stem
+        if re.fullmatch(r"[a-f0-9]{16,64}", stem):
+            return stem
+    return ""
+
+
+KEY = (os.environ.get("INDEXNOW_KEY") or _key_from_repo()).strip()
 MAX_URLS = 10000
 
 
