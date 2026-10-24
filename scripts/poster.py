@@ -372,7 +372,10 @@ def render_poster(job, out_path, site_url="", source_line=""):
 
     # ── title
     y = 176
-    title = (job.get("title") or "Job Opportunity").strip()
+    # The poster is the thing people forward on WhatsApp, so it must show the
+    # readable title, not the raw aggregator string ("... Jobs 2026 Application
+    # Form Download"). display_title is built for exactly this.
+    title = (job.get("display_title") or job.get("title") or "Job Opportunity").strip()
     size = 64
     tf = F(size, "800")
     lines = wrap(d, title, tf, W - M * 2 - 30, max_lines=3)
