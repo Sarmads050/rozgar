@@ -1,0 +1,35 @@
+{
+  "name": "RozgarJobs \u2014 Jobs in Pakistan",
+  "short_name": "RozgarJobs",
+  "description": "Government, private and remote jobs in Pakistan, updated every hour.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f8",
+  "theme_color": "#0f2a47",
+  "lang": "en-PK",
+  "icons": [
+    {
+      "src": "assets/img/mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/og.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Job alerts",
+      "url": "./alerts.html"
+    },
+    {
+      "name": "All locations",
+      "url": "./locations.html"
+    }
+  ]
+}

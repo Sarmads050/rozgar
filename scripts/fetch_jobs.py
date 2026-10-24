@@ -25,6 +25,7 @@ prominent "Apply on <source>" link.
 
 import csv
 import hashlib
+import glob
 import html
 import io
 import json
@@ -802,6 +803,7 @@ PAGE = """<!DOCTYPE html>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{og_image}">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Cpath d='M20 17h9v13l11-13h10L37 32l14 15H40L29 34v13h-9z' fill='white'/%3E%3C/svg%3E">
+<link rel="manifest" href="../manifest.webmanifest">
 <link rel="stylesheet" href="../assets/css/style.css">
 {jsonld}
 </head>
@@ -1702,6 +1704,116 @@ def build_landing_pages(jobs):
     return made
 
 
+def write_locations_page():
+    """A hub that links every city and category page that actually exists.
+    Google follows links, not sitemaps — this is the internal-link backbone."""
+    city_rows, cat_rows = [], []
+    city_dir = os.path.join(ROOT, "jobs-in")
+    cat_dir = os.path.join(ROOT, "category")
+    for c in LANDING_CITIES:
+        fp = os.path.join(city_dir, f"{safe_slug(c)}.html")
+        if os.path.exists(fp):
+            city_rows.append(f'<a class="loc" href="jobs-in/{safe_slug(c)}.html">{esc(c)}'
+                             f'<span>jobs in {esc(c.lower())}</span></a>')
+    for c in LANDING_CATS:
+        fp = os.path.join(cat_dir, f"{safe_slug(c)}.html")
+        if os.path.exists(fp):
+            cat_rows.append(f'<a class="loc" href="category/{safe_slug(c)}.html">{esc(c)}'
+                            f'<span>{esc(c.lower())} jobs</span></a>')
+
+    guides = [("national-job-portal-guide", "How to apply on NJP"),
+              ("bps-pay-scales", "BPS pay scales explained"),
+              ("documents-for-government-job", "Documents checklist"),
+              ("spot-fake-job-advertisement", "Spot a fake job ad")]
+    guide_rows = "".join(f'<a class="loc" href="guides/{g}.html">{esc(t)}<span>guide</span></a>'
+                         for g, t in guides
+                         if os.path.exists(os.path.join(ROOT, "guides", f"{g}.html")))
+
+    base = SITE_URL or ""
+    html = f"""<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; font-src 'self' data:; connect-src 'self' https:; form-action 'self' mailto:; base-uri 'self'; object-src 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Browse Jobs by City and Category in Pakistan | RozgarJobs</title>
+<meta name="description" content="Every city and category page on RozgarJobs: Karachi, Lahore, Islamabad, Rawalpindi, Peshawar and more, plus software, health, teaching, finance and government job categories.">
+<meta name="theme-color" content="#0f2a47">
+<link rel="canonical" href="{base}/locations.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RozgarJobs">
+<meta property="og:title" content="Browse jobs by city and category">
+<meta property="og:description" content="All city and category job pages in one place.">
+<meta property="og:image" content="{base}/assets/img/og.png">
+<link rel="icon" type="image/svg+xml" href="assets/img/mark.svg">
+<link rel="apple-touch-icon" href="assets/img/mark.svg">
+<link rel="stylesheet" href="assets/css/style.css">
+<style>
+  .loc-wrap {{ padding: 26px 0 20px; }}
+  .loc-wrap h1 {{ font-size: clamp(25px,3.2vw,36px); letter-spacing:-1px; margin:0 0 10px; }}
+  .loc-wrap .lede {{ color: var(--muted); font-size: 15.5px; max-width: 70ch; margin: 0 0 24px; }}
+  .loc-wrap h2 {{ font-size: 17px; letter-spacing:-.3px; margin: 28px 0 12px; }}
+  .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }}
+  .loc {{ display: flex; flex-direction: column; gap: 2px; padding: 13px 15px; text-decoration: none;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 11px;
+    color: var(--ink); font-weight: 650; font-size: 14.5px; }}
+  .loc span {{ font-weight: 500; font-size: 12px; color: var(--muted); }}
+  .loc:hover {{ border-color: var(--brand); }}
+</style>
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap head-in">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="assets/img/mark.svg" alt="" width="38" height="38">
+      <span class="brand-text"><strong>Rozgar<span class="bj">Jobs</span></strong><small>Jobs in Pakistan</small></span>
+    </a>
+    <nav class="head-nav"><a href="index.html">Jobs</a><a href="alerts.html">Alerts</a>
+      <a href="guides/index.html">Guides</a><a href="employers.html">Post a job</a></nav>
+  </div>
+</header>
+
+<main class="wrap loc-wrap">
+  <h1>Browse jobs by city and category</h1>
+  <p class="lede">Every place and field we cover. Each page is rebuilt every hour with the vacancies that are
+  actually open, so a page disappears when it has nothing live behind it.</p>
+
+  <h2>Cities</h2>
+  <div class="grid">{''.join(city_rows) or '<p>No city pages yet.</p>'}</div>
+
+  <h2>Categories</h2>
+  <div class="grid">{''.join(cat_rows) or '<p>No category pages yet.</p>'}</div>
+
+  <h2>Guides</h2>
+  <div class="grid">{guide_rows}</div>
+
+  <h2>All jobs</h2>
+  <p style="font-size:14.6px"><a href="index.html" style="color:var(--brand);text-decoration:underline">
+    Search every live vacancy</a> — filter by city, category, sector or keyword.</p>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap foot-bottom">
+    <span>&copy; {datetime.now().year} RozgarJobs</span>
+    <span>Jobs in Pakistan, updated hourly</span>
+  </div>
+</footer>
+
+<nav class="bottom-nav" aria-label="Main navigation">
+  <a href="index.html"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20H4z"/><path d="M9.5 20v-5.5h5V20"/></svg><span>Jobs</span></a>
+  <a href="alerts.html"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span>Alerts</span></a>
+  <a href="index.html?saved=1"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.6l2.6 5.4 5.9.8-4.3 4.1 1.1 5.8L12 16.9 6.7 19.7l1.1-5.8L3.5 9.8l5.9-.8z"/></svg><span>Saved</span></a>
+  <a href="employers.html"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Post a job</span></a>
+</nav>
+</body>
+</html>
+"""
+    with open(os.path.join(ROOT, "locations.html"), "w", encoding="utf-8") as f:
+        f.write(html)
+    return len(city_rows) + len(cat_rows) + len(guide_rows)
+
+
 def write_feed(jobs):
     latest = jobs[:50]
     items = "".join(f"""
@@ -1753,9 +1865,15 @@ def write_sitemaps(jobs, landing_urls):
               f"<changefreq>hourly</changefreq><priority>1.0</priority></url>"
               f"<url><loc>{esc(base)}/employers.html</loc><lastmod>{now_iso}</lastmod>"
               f"<changefreq>monthly</changefreq><priority>0.5</priority></url>")
-    for extra in ("about.html", "contact.html", "alerts.html", "privacy.html", "terms.html"):
+    for extra in ("about.html", "contact.html", "alerts.html", "privacy.html", "terms.html",
+                  "locations.html"):
         pages += (f"<url><loc>{esc(base)}/{extra}</loc><lastmod>{now_iso}</lastmod>"
-                  f"<changefreq>monthly</changefreq><priority>0.4</priority></url>")
+                  f"<changefreq>daily</changefreq><priority>0.6</priority></url>")
+    for g in sorted(glob.glob(os.path.join(ROOT, "guides", "*.html"))):
+        gp = os.path.basename(g)
+        pages += (f"<url><loc>{esc(base)}/guides/{gp}</loc><lastmod>{now_iso}</lastmod>"
+                  f"<changefreq>monthly</changefreq><priority>0.6</priority></url>")
+
     with open(os.path.join(ROOT, "sitemap-pages.xml"), "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n'
                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + pages + "</urlset>")
@@ -1800,6 +1918,8 @@ Jobs live now: {live_count}
 - [Government jobs]({base}/): filter the Government toggle
 - [Job alerts]({base}/alerts.html): email and RSS alerts
 - [Post a job]({base}/employers.html): employer listings
+- [All locations]({base}/locations.html): every city and category page
+- [Guides]({base}/guides/index.html): NJP, BPS scales, documents, scams
 - [About]({base}/about.html) · [Contact]({base}/contact.html) · [Privacy]({base}/privacy.html) · [Terms]({base}/terms.html)
 
 ## City pages
@@ -2001,6 +2121,8 @@ def main():
         json.dump({"meta": meta, "jobs": light_jobs}, f, ensure_ascii=False, separators=(",", ":"))
 
     landing_urls = build_landing_pages(jobs)
+    n_loc = write_locations_page()
+    print(f"     {'':12s} {n_loc:4d} location links")
     write_feed(jobs)
     n_maps = write_sitemaps(jobs, landing_urls)
     print(f"     {'':12s} {len(landing_urls):4d} SEO pages, {n_maps} sitemaps")
