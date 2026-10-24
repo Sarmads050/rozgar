@@ -203,6 +203,16 @@ def main() -> int:
                 old.get("last_date")) == key:
             fail("This exact job is already on the site — nothing to add.")
 
+    if os.environ.get("DRY_RUN") == "1":
+        msg = (f"**{title}** at {company}\n\nCloses {last.isoformat()} · {row['location']} · "
+               f"{row.get('category', '')}\n\nNothing written yet — this was a dry run.")
+        print(msg)
+        with open(os.environ.get("GITHUB_OUTPUT", os.devnull), "a", encoding="utf-8") as fh:
+            fh.write("ok=true\n")
+            fh.write(f"title={title[:80]}\n")
+            fh.write("message<<" + "EOF\n" + msg + "\nEOF\n")
+        return 0
+
     # expired manual rows are dropped on every ingest so the file stays small
     rows = [r for r in rows if (r.get("last_date") or "9999") >= today.isoformat()]
     rows.append(row)

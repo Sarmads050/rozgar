@@ -1,7 +1,6 @@
 name: Post a job
 description: Employers — publish a vacancy on RozgarJobs. Takes 2 minutes and costs nothing.
 title: "[Job] "
-labels: ["job-submission", "needs-review"]
 body:
   - type: markdown
     attributes:

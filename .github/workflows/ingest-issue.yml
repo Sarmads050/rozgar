@@ -1,66 +1,46 @@
-name: Ingest job submission
+name: Post a job (submit → review → publish)
 
-# Turns an approved "Post a job" issue into a real listing in data/manual-jobs.json.
-# No server, no database, no cost: the issue IS the form, GitHub Actions is the backend.
+# The employer fills in .github/ISSUE_TEMPLATE/post-a-job.yml.
+#   · On open  → the submission is validated and a checklist is posted.
+#   · The repo owner replies "/approve" → the row is added to
+#     data/manual-jobs.json, the site rebuilds and the issue closes.
+#
+# No labels required (a fine-grained token without Issues scope cannot create
+# them), no server, no database, no cost.
 
 on:
   issues:
-    types: [opened, labeled, edited]
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
   issues: write
 
 concurrency:
-  group: ingest-${{ github.event.issue.number }}
+  group: ingest-issue-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
-  ingest:
-    # Only run for the job form, and only once a maintainer adds "approved".
+  # ── 1. validate as soon as the form is submitted ──────────────────────
+  check:
     if: >
-      contains(github.event.issue.labels.*.name, 'job-submission') &&
-      contains(github.event.issue.labels.*.name, 'approved')
+      github.event_name == 'issues' &&
+      startsWith(github.event.issue.title, '[Job]')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Parse the issue form
+      - name: Dry-run the parser
         id: parse
         env:
           BODY: ${{ github.event.issue.body }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          DRY_RUN: "1"
         run: python3 scripts/ingest_issue.py
-
-      - name: Commit the new listing
-        if: steps.parse.outputs.ok == 'true'
-        run: |
-          set -e
-          git config user.name "Rozgar Bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add data/manual-jobs.json
-          if git diff --cached --quiet; then
-            echo "Nothing new to commit"
-          else
-            git commit -m "feat: employer job #${{ github.event.issue.number }} — ${{ steps.parse.outputs.title }}"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
-
-      - name: Rebuild the site
-        if: steps.parse.outputs.ok == 'true'
-        run: |
-          python3 -m pip install --quiet pillow "qrcode[pil]" || true
-          python3 scripts/fetch_jobs.py
-
-      - name: Comment on the issue
-        if: always()
+      - name: Post the review checklist
         uses: actions/github-script@v7
         env:
           OK: ${{ steps.parse.outputs.ok }}
@@ -70,13 +50,100 @@ jobs:
             const ok = process.env.OK === 'true';
             const msg = process.env.MSG || '';
             const body = ok
-              ? `✅ Published.\n\n${msg}\n\nIt is now in the daily build — the listing appears on the site within the hour and is removed automatically after its closing date.`
-              : `⚠️ Not published yet.\n\n${msg}\n\nFix the form and a maintainer can re-approve.`;
+              ? `✅ **Looks complete.**\n\n${msg}\n\n` +
+                `A maintainer will check the employer and the apply link. ` +
+                `Once approved the listing appears on the site within the hour and is ` +
+                `removed automatically after the closing date.\n\n` +
+                `> Maintainer: reply \`/approve\` to publish, or \`/reject reason\` to refuse.`
+              : `⚠️ **Needs a fix before it can go live.**\n\n${msg}\n\n` +
+                `Edit the issue (top-right → Edit) and the check runs again automatically.`;
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
               body
+            });
+
+  # ── 2. publish on the owner's approval comment ────────────────────────
+  publish:
+    if: >
+      github.event_name == 'issue_comment' &&
+      startsWith(github.event.comment.body, '/approve') &&
+      github.event.comment.user.login == github.repository_owner &&
+      github.event.issue.state == 'open'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch the issue body
+        id: body
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'EOF'
+          import json, os, urllib.request
+          url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{os.environ['ISSUE_NUMBER']}"
+          req = urllib.request.Request(url, headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                                                     "Accept": "application/vnd.github+json"})
+          body = json.load(urllib.request.urlopen(req))["body"] or ""
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write("body<<BODY_EOF\n" + body + "\nBODY_EOF\n")
+          EOF
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+
+      - name: Parse and validate
+        id: parse
+        env:
+          BODY: ${{ steps.body.outputs.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: python3 scripts/ingest_issue.py
+
+      - name: Commit the listing
+        if: steps.parse.outputs.ok == 'true'
+        run: |
+          set -e
+          git config user.name "Rozgar Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/manual-jobs.json
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -m "feat: employer job #${{ github.event.issue.number }} [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Rebuild the site with the new listing
+        if: steps.parse.outputs.ok == 'true'
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          python3 -m pip install --quiet pillow "qrcode[pil]" || true
+          python3 scripts/fetch_jobs.py || echo "build will retry in the hourly run"
+
+      - name: Comment and close
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          OK: ${{ steps.parse.outputs.ok }}
+          MSG: ${{ steps.parse.outputs.message }}
+        with:
+          script: |
+            const ok = process.env.OK === 'true';
+            const msg = process.env.MSG || '';
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: ok
+                ? `🎉 Published.\n\n${msg}\n\nIt goes live in the next hourly build and closes automatically after the last date.`
+                : `⚠️ Could not publish.\n\n${msg}`
             });
             if (ok) {
               await github.rest.issues.update({
