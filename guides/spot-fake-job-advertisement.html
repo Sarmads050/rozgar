@@ -52,6 +52,11 @@
   .doc .box { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
   .doc .box p { margin: 0; }
   .doc table { width: 100%; border-collapse: collapse; font-size: 14.4px; margin: 12px 0 18px; }
+  /* wide tables must scroll inside the column, never push the page sideways */
+  @media (max-width: 720px) {
+    .doc table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+    .doc th, .doc td { padding: 8px 10px; }
+  }
   .doc th, .doc td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
   .doc th { color: var(--muted); font-weight: 650; background: var(--surface-2); }
   .updated { font-size: 12.5px; color: var(--muted); margin-top: 26px; }
@@ -127,7 +132,7 @@ fake listing — but scammers keep finding new angles, so here is the fuller lis
   <a href="../contact.html">tell us</a> and we will remove it.</p>
 </div>
 
-<p class="updated">Updated 23 October 2026.</p>
+<p class="updated">Updated 24 October 2026.</p>
 <div class="next">
   <a href="documents-for-government-job.html">Documents checklist &rarr;</a>
   <a href="national-job-portal-guide.html">Apply on NJP &rarr;</a>

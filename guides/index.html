@@ -52,6 +52,11 @@
   .doc .box { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
   .doc .box p { margin: 0; }
   .doc table { width: 100%; border-collapse: collapse; font-size: 14.4px; margin: 12px 0 18px; }
+  /* wide tables must scroll inside the column, never push the page sideways */
+  @media (max-width: 720px) {
+    .doc table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+    .doc th, .doc td { padding: 8px 10px; }
+  }
   .doc th, .doc td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
   .doc th { color: var(--muted); font-weight: 650; background: var(--surface-2); }
   .updated { font-size: 12.5px; color: var(--muted); margin-top: 26px; }
@@ -75,7 +80,7 @@
 <h1>Job search guides for Pakistan</h1>
 <p class="lede">Plain-English guides to the confusing parts: the National Job Portal, BPS scales, the
 documents every application needs, and how to tell a real vacancy from a scam.</p>
-<div class="cards"><a class="gcard" href="national-job-portal-guide.html"><strong>How to apply on the National Job Portal (NJP)</strong><span>A step-by-step walkthrough of applying for federal government jobs on njp.gov.pk: the account, the documents, the fee and how to track your application.</span></a><a class="gcard" href="bps-pay-scales.html"><strong>BPS pay scales explained (BPS-01 to BPS-22)</strong><span>What BPS means, which scales match which posts, how pay and allowances work, and how to read the age limit and quota in a government advertisement.</span></a><a class="gcard" href="documents-for-government-job.html"><strong>Documents you need for a government job</strong><span>The full checklist: CNIC, domicile, degrees, experience letters, photographs and attestation — plus what to carry to the test.</span></a><a class="gcard" href="spot-fake-job-advertisement.html"><strong>How to spot a fake job advertisement</strong><span>Eight warning signs, the scams common in Pakistan, how to check a listing in two minutes, and what to do if you have already paid or shared documents.</span></a></div>
+<div class="cards"><a class="gcard" href="national-job-portal-guide.html"><strong>How to apply on the National Job Portal (NJP)</strong><span>A step-by-step walkthrough of applying for federal government jobs on njp.gov.pk: the account, the documents, the fee and how to track your application.</span></a><a class="gcard" href="bps-pay-scales.html"><strong>BPS pay scales explained (BPS-01 to BPS-22)</strong><span>What BPS means, which scales match which posts, how pay and allowances work, and how to read the age limit and quota in a government advertisement.</span></a><a class="gcard" href="documents-for-government-job.html"><strong>Documents you need for a government job</strong><span>The full checklist: CNIC, domicile, degrees, experience letters, photographs and attestation — plus what to carry to the test.</span></a><a class="gcard" href="spot-fake-job-advertisement.html"><strong>How to spot a fake job advertisement</strong><span>Eight warning signs, the scams common in Pakistan, how to check a listing in two minutes, and what to do if you have already paid or shared documents.</span></a><a class="gcard" href="government-test-interview-guide.html"><strong>The written test and interview, explained</strong><span>What actually happens at each stage of FPSC, PPSC, NTS and departmental recruitment in Pakistan — and a two-week preparation plan that does not need a paid course.</span></a><a class="gcard" href="cv-for-government-job.html"><strong>How to write a CV for a government job</strong><span>The order, the table and the three mistakes that get an otherwise strong application rejected by a Pakistani shortlisting committee.</span></a></div>
 
 <h2>Why these pages exist</h2>
 <p>Most job boards list vacancies and stop there. But a large share of applications fail for reasons that
@@ -84,12 +89,12 @@ submitted a day late, or a fee paid to a person who was never a recruiter. These
 
 <h2>Coming next</h2>
 <ul>
-  <li>Test and interview pattern for the public service commissions</li>
-  <li>How to write a CV for a government post</li>
   <li>Provincial quota and domicile, explained</li>
+  <li>How to prepare for a computer or typing test</li>
+  <li>What a merit list means, and how to read it</li>
 </ul>
 
-<p class="updated">Updated 23 October 2026.</p>
+<p class="updated">Updated 24 October 2026.</p>
 <div class="next">
   <a href="../index.html">Browse jobs &rarr;</a>
   <a href="../locations.html">All locations &rarr;</a>

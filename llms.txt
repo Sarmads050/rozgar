@@ -19,6 +19,7 @@ Jobs live now: 173
 - [Karachi jobs](https://sarmads050.github.io/rozgar/jobs-in/karachi.html)
 - [Lahore jobs](https://sarmads050.github.io/rozgar/jobs-in/lahore.html)
 - [Islamabad jobs](https://sarmads050.github.io/rozgar/jobs-in/islamabad.html)
+- [Rawalpindi jobs](https://sarmads050.github.io/rozgar/jobs-in/rawalpindi.html)
 - [Peshawar jobs](https://sarmads050.github.io/rozgar/jobs-in/peshawar.html)
 
 ## Category pages

@@ -113,6 +113,11 @@ STYLE = """
   .doc .box { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--gold); border-radius: 10px; padding: 14px 16px; margin: 18px 0; }
   .doc .box p { margin: 0; }
   .doc table { width: 100%; border-collapse: collapse; font-size: 14.4px; margin: 12px 0 18px; }
+  /* wide tables must scroll inside the column, never push the page sideways */
+  @media (max-width: 720px) {
+    .doc table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+    .doc th, .doc td { padding: 8px 10px; }
+  }
   .doc th, .doc td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); }
   .doc th { color: var(--muted); font-weight: 650; background: var(--surface-2); }
   .updated { font-size: 12.5px; color: var(--muted); margin-top: 26px; }
@@ -168,6 +173,12 @@ GUIDES = [
     ("spot-fake-job-advertisement", "How to spot a fake job advertisement",
      "Eight warning signs, the scams common in Pakistan, how to check a listing in two minutes, and what "
      "to do if you have already paid or shared documents."),
+    ("government-test-interview-guide", "The written test and interview, explained",
+     "What actually happens at each stage of FPSC, PPSC, NTS and departmental recruitment in Pakistan — "
+     "and a two-week preparation plan that does not need a paid course."),
+    ("cv-for-government-job", "How to write a CV for a government job",
+     "The order, the table and the three mistakes that get an otherwise strong application rejected by a "
+     "Pakistani shortlisting committee."),
 ]
 
 # ── the individual pages are written below as full HTML bodies ───────────────
@@ -238,7 +249,7 @@ department's own website. Check both — a missed test date is rarely reopened.<
 <p>Some posts have an application fee and some are free. The fee, the bank and the challan number are
 written inside that job's advertisement. Never pay a person who promises to "get you shortlisted".</p>
 
-<p class="updated">Updated 23 October 2026. Portal rules can change — always follow the advertisement in front of you.</p>
+<p class="updated">Updated 24 October 2026. Portal rules can change — always follow the advertisement in front of you.</p>
 <div class="next">
   <a href="bps-pay-scales.html">BPS pay scales explained &rarr;</a>
   <a href="documents-for-government-job.html">Documents checklist &rarr;</a>
@@ -317,7 +328,7 @@ alone is not enough.</p>
 <p>If two posts look identical but one is BPS-11 and the other BPS-14, the difference is pay, promotion
 speed and often the required qualification. Read both advertisements fully before applying.</p>
 
-<p class="updated">Updated 23 October 2026. Pay figures are revised by the government; confirm the current rate in the advertisement.</p>
+<p class="updated">Updated 24 October 2026. Pay figures are revised by the government; confirm the current rate in the advertisement.</p>
 <div class="next">
   <a href="national-job-portal-guide.html">Apply on NJP &rarr;</a>
   <a href="documents-for-government-job.html">Documents checklist &rarr;</a>
@@ -394,7 +405,7 @@ because the accepted authority differs between departments.</p>
 agent", and never let a stranger keep your CNIC copies. If a listing asks for money or originals before an
 interview, <a href="../contact.html">report it to us</a>.</p>
 
-<p class="updated">Updated 23 October 2026. Requirements differ per advertisement — treat that document as the final word.</p>
+<p class="updated">Updated 24 October 2026. Requirements differ per advertisement — treat that document as the final word.</p>
 <div class="next">
   <a href="national-job-portal-guide.html">Apply on NJP &rarr;</a>
   <a href="spot-fake-job-advertisement.html">Spot a fake job ad &rarr;</a>
@@ -477,7 +488,7 @@ fake listing — but scammers keep finding new angles, so here is the fuller lis
   <a href="../contact.html">tell us</a> and we will remove it.</p>
 </div>
 
-<p class="updated">Updated 23 October 2026.</p>
+<p class="updated">Updated 24 October 2026.</p>
 <div class="next">
   <a href="documents-for-government-job.html">Documents checklist &rarr;</a>
   <a href="national-job-portal-guide.html">Apply on NJP &rarr;</a>
@@ -497,6 +508,169 @@ fake listing — but scammers keep finding new angles, so here is the fuller lis
       "Stop contact, report the number and the listing, file a complaint with the FIA cybercrime wing, and "
       "call your bank immediately if you shared bank details.")])
 
+# ── guide 5: interview & test ───────────────────────────────────────────────
+page(
+    "government-test-interview-guide",
+    "Government Test and Interview: What to Expect in Pakistan | RozgarJobs",
+    "How the written test, the screening test and the interview actually work for FPSC, PPSC and "
+    "departmental recruitment in Pakistan — and how to prepare in two weeks.",
+    "Test & interview",
+    """
+<h1>The written test and interview, explained</h1>
+<p class="lede">Every government advertisement ends with two words that decide the outcome: written test
+and interview. Here is what actually happens at each stage, and how to prepare without buying a course.</p>
+
+<h2>Which test will you sit</h2>
+<table class="tbl">
+  <tr><th>Recruiting body</th><th>Typical test</th><th>After the test</th></tr>
+  <tr><td>FPSC (federal)</td><td>Objective screening test, subject-specific for technical posts</td><td>Viva before the commission</td></tr>
+  <tr><td>PPSC (Punjab)</td><td>Written paper at a district centre; separate paper for lecturers</td><td>Interview at the commission</td></tr>
+  <tr><td>NTS / PTS / CTS</td><td>One MCQ paper set by the testing service</td><td>Employer's own interview</td></tr>
+  <tr><td>Departmental / district posts</td><td>Short written paper or a practical/typing test</td><td>Interview at the office</td></tr>
+</table>
+
+<h2>The parts that repeat every year</h2>
+<p>Most screening papers share the same skeleton: English (grammar, comprehension, a short paragraph),
+general knowledge and Pakistan affairs, basic mathematics, Islamiat or ethics for some posts, and
+professional questions for the specific job. Preparing the first four properly covers roughly two-thirds
+of the paper for almost every post.</p>
+
+<div class="box">
+  <strong>The five things candidates lose marks on</strong>
+  <ul>
+    <li>Filling the answer sheet incorrectly — the roll number and the bubbles are checked by machine.</li>
+    <li>Guessing without a strategy; a wrong answer can carry a negative mark in some papers.</li>
+    <li>Running out of time on the maths section instead of banking the easy marks first.</li>
+    <li>Not reading the syllabus printed with the advertisement — it tells you the weighting.</li>
+    <li>Bringing the wrong documents to the centre and being turned away at the gate.</li>
+  </ul>
+</div>
+
+<h2>Two weeks of preparation that actually works</h2>
+<ol>
+  <li><strong>Days 1–2:</strong> read the advertisement and the syllabus line by line. Write down the exact
+      subjects and their weight. Anything not in the syllabus is not your problem this month.</li>
+  <li><strong>Days 3–8:</strong> one past paper under timed conditions every second day. Between papers,
+      revise only the topics you got wrong — not everything.</li>
+  <li><strong>Days 9–12:</strong> English and Pakistan affairs daily, 40 minutes each. These two carry the
+      most marks across posts.</li>
+  <li><strong>Days 13–14:</strong> two full mock papers, then stop. Sleep and logistics beat one more chapter.</li>
+</ol>
+
+<h2>The interview</h2>
+<p>The viva is short — usually 10 to 20 minutes — and it is not a knowledge test. The panel is checking
+whether you understand the post you applied for, whether your documents match what you claimed, and how
+you behave under mild pressure. Expect three kinds of question: about your own application (why this post,
+what you studied, what you have done), about the department and its work, and one situational question
+about a problem you might actually face on the job.</p>
+<p>Answer in complete sentences, admit what you do not know, and never argue. If a question is outside your
+field, say so and offer what you do know. Panels respond better to a calm "I have not worked on that, but I
+would approach it like this" than to a confident wrong answer.</p>
+
+<h2>What to carry</h2>
+<ul>
+  <li>The printed roll number slip or the call letter — without it you will not be allowed in.</li>
+  <li>Original CNIC, plus one photocopy.</li>
+  <li>Two or three recent photographs, the same ones used on the form.</li>
+  <li>Original degrees and experience letters, for verification at the interview stage.</li>
+  <li>A black ballpoint, a pencil, a sharpener and a simple calculator only if the advertisement allows it.</li>
+</ul>
+
+<p class="updated">Updated 24 October 2026.</p>
+<div class="next">
+  <a href="documents-for-government-job.html">Documents checklist &rarr;</a>
+  <a href="bps-pay-scales.html">BPS pay scales &rarr;</a>
+  <a href="../sarkari-naukri.html">Government jobs &rarr;</a>
+</div>
+""",
+    [("Is there negative marking in government tests?",
+      "Some testing services apply it and some do not — it is stated on the roll number slip or the "
+      "instruction page. If it is not stated, assume guesses cost nothing but still answer only where you "
+      "can eliminate two options."),
+     ("Can I take a calculator into the test?",
+      "Only if the advertisement or the roll number slip says so. Most objective papers do not allow any "
+      "electronic device, and phones are confiscated at the gate."),
+     ("How long after the test is the interview?",
+      "Usually four to twelve weeks. The result is published on the commission's own website with the roll "
+      "numbers of shortlisted candidates, and call letters follow by post or email."),
+     ("What if I fail the written test?",
+      "You can apply again to the next advertisement for the same post, and there is no limit on attempts. "
+      "Your previous result does not affect a new application.")])
+
+# ── guide 6: CV for a government post ───────────────────────────────────────
+page(
+    "cv-for-government-job",
+    "How to Write a CV for a Government Job in Pakistan | RozgarJobs",
+    "The format, the order and the exact wording that government recruitment boards in Pakistan expect — "
+    "plus the three mistakes that get an otherwise good application rejected.",
+    "Government CV",
+    """
+<h1>How to write a CV for a government job</h1>
+<p class="lede">A government shortlisting committee spends about 40 seconds on a CV. It is not looking for
+creativity — it is checking whether you meet the advertised criteria, in the order the advertisement lists
+them. This is how to make that check easy.</p>
+
+<h2>Use the order the advertisement uses</h2>
+<p>Private-sector CVs lead with a personal statement. Government CVs lead with the facts. Use this order:</p>
+<ol>
+  <li><strong>Name</strong> exactly as on the CNIC, then father's name, CNIC number, date of birth,
+      domicile district, postal address, phone and email.</li>
+  <li><strong>Post applied for</strong>, with the advertisement number and the closing date. Committees sort
+      applications by post; if the post is not obvious on the first page, the file is set aside.</li>
+  <li><strong>Academic record</strong> in a table: degree, institution, board or university, year, marks and
+      percentage. Start from matric and go upward — the advertisement usually sets a minimum starting point.</li>
+  <li><strong>Experience</strong> with dates, employer, designation and a one-line description of duties.
+      Overlaps and gaps are noticed, so keep the dates exact.</li>
+  <li><strong>Certificates</strong> and computer or language skills, then the document list.</li>
+</ol>
+
+<h2>The table that does the work</h2>
+<p>Academic marks are the most common filter. Put them in a table so a reader can scan them in one glance:</p>
+<table class="tbl">
+  <tr><th>Examination</th><th>Institution / Board</th><th>Year</th><th>Marks</th><th>%</th></tr>
+  <tr><td>Matric (Science)</td><td>BISE Lahore</td><td>2018</td><td>780 / 1100</td><td>70.9</td></tr>
+  <tr><td>Intermediate (Pre-Engineering)</td><td>BISE Lahore</td><td>2020</td><td>760 / 1100</td><td>69.1</td></tr>
+  <tr><td>BS Computer Science</td><td>University of the Punjab</td><td>2024</td><td>3.42 / 4.00 CGPA</td><td>—</td></tr>
+</table>
+
+<h2>Three mistakes that get a good application rejected</h2>
+<ul>
+  <li><strong>A name that does not match the CNIC.</strong> Adding "Muhammad" that is not on the card, or
+      spelling a father's name differently on the CV and the form, is the single most common rejection.</li>
+  <li><strong>Claiming experience you cannot prove.</strong> Every experience line needs a certificate or a
+      letter that can be verified. Unverifiable experience during the interview stage removes the
+      candidate from the merit list.</li>
+  <li><strong>Sending the wrong number of copies.</strong> Advertisements ask for a specific number of
+      copies of each document, attested in a specific way. Read that paragraph twice.</li>
+</ul>
+
+<div class="box">
+  <strong>Formatting rules that matter on paper</strong>
+  <ul>
+    <li>Two pages maximum, single column, no photographs unless asked.</li>
+    <li>Font size 11–12, black text, no colour blocks — many offices still print in black and white.</li>
+    <li>Attach copies in the order the advertisement lists them, and write the post name on the envelope.</li>
+    <li>Keep a photocopy of the complete application. If the original is lost in the post, the copy is your proof.</li>
+  </ul>
+</div>
+
+<p class="updated">Updated 24 October 2026.</p>
+<div class="next">
+  <a href="documents-for-government-job.html">Documents checklist &rarr;</a>
+  <a href="government-test-interview-guide.html">Test and interview &rarr;</a>
+  <a href="../sarkari-naukri.html">Government jobs &rarr;</a>
+</div>
+""",
+    [("Do government jobs accept a CV by email?",
+      "Only if the advertisement says so. Most federal and provincial posts require a prescribed form, "
+      "submitted online or by post — a CV alone is not an application."),
+     ("Should I write a covering letter?",
+      "Yes when the advertisement asks for one, and keep it to three short paragraphs: the post applied "
+      "for, how you meet the criteria, and what you have attached."),
+     ("Do I need to attest my documents?",
+      "Usually yes — by a gazetted officer, or verified through the relevant board or university. The "
+      "advertisement states the requirement; do not guess.")])
+
 # ── guides index ────────────────────────────────────────────────────────────
 cards = "".join(
     f'<a class="gcard" href="{slug}.html"><strong>{title}</strong><span>{desc}</span></a>'
@@ -515,12 +689,12 @@ submitted a day late, or a fee paid to a person who was never a recruiter. These
 
 <h2>Coming next</h2>
 <ul>
-  <li>Test and interview pattern for the public service commissions</li>
-  <li>How to write a CV for a government post</li>
   <li>Provincial quota and domicile, explained</li>
+  <li>How to prepare for a computer or typing test</li>
+  <li>What a merit list means, and how to read it</li>
 </ul>
 
-<p class="updated">Updated 23 October 2026.</p>
+<p class="updated">Updated 24 October 2026.</p>
 <div class="next">
   <a href="../index.html">Browse jobs &rarr;</a>
   <a href="../locations.html">All locations &rarr;</a>
