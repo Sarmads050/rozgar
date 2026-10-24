@@ -29,6 +29,7 @@ Jobs live now: 173
 - [Finance & Accounting](https://sarmads050.github.io/rozgar/category/finance-accounting.html)
 - [IT & Computer](https://sarmads050.github.io/rozgar/category/it-computer.html)
 - [Forces & Security](https://sarmads050.github.io/rozgar/category/forces-security.html)
+- [Support Staff (Class IV)](https://sarmads050.github.io/rozgar/category/support-staff-class-iv.html)
 - [Government / Other](https://sarmads050.github.io/rozgar/category/government-other.html)
 - [Software Development](https://sarmads050.github.io/rozgar/category/software-development.html)
 - [Marketing](https://sarmads050.github.io/rozgar/category/marketing.html)

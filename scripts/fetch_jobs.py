@@ -1369,11 +1369,21 @@ def _ld(data):
 
 
 def breadcrumb_jsonld(job, canonical):
-    items = [
-        ("Home", (SITE_URL + "/") if SITE_URL else "/"),
-        (job.get("category") or "Jobs", (SITE_URL + "/?category=" + urllib.parse.quote(job.get("category") or "")) if SITE_URL else "/"),
-        (job["title"], canonical),
-    ]
+    """Real breadcrumb trail: Home → city page → category page → job.
+
+    A query-string URL in a breadcrumb is a dead end for Google (it wants a
+    crawlable page), so the middle steps point at the actual landing pages when
+    they exist and are skipped when they do not.
+    """
+    base = SITE_URL or ""
+    city = (job.get("location") or "").split(",")[0].strip()
+    cat = job.get("category") or ""
+    items = [("Home", base + "/" if base else "/")]
+    if base and city and safe_slug(city) in CITY_PAGES:
+        items.append((f"Jobs in {city}", f"{base}/jobs-in/{safe_slug(city)}.html"))
+    if base and cat and safe_slug(cat) in CAT_PAGES:
+        items.append((f"{cat} jobs", f"{base}/category/{safe_slug(cat)}.html"))
+    items.append((job.get("display_title") or job["title"], canonical))
     data = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
