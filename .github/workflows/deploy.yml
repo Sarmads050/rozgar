@@ -104,6 +104,9 @@ jobs:
           INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY || '0ff29aca72ad22477ca16079c8ab229f' }}
         run: python scripts/ping_indexnow.py
 
+      - name: Write the SEO status report
+        run: python3 scripts/seo_report.py
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
