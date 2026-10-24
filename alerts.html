@@ -75,12 +75,19 @@
   <div class="al-grid">
 
     <!-- EMAIL -->
+    <div class="notice-box" style="margin-bottom:18px">
+      <strong>Want jobs the second they are posted?</strong>
+      The <a href="feed.xml" style="color:inherit;text-decoration:underline">RSS feed</a> updates every hour
+      and needs no account, no email and no app. Add it to any reader, or to the
+      <a href="index.html" style="color:inherit;text-decoration:underline">Saved</a> tab for later reading.
+    </div>
+
     <section class="al-card al-mail">
       <div class="ic" aria-hidden="true">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 6-10 7L2 6"/></svg>
       </div>
       <h2>Email alerts</h2>
-      <p>One short email a day with the new jobs that match you. Free, and you can stop any time.</p>
+      <p>One short email a day with the new jobs that match you. Free, and you can stop any time — every message ends with a one-click unsubscribe link.</p>
 
       <div class="pills">
         <span class="pill">Free</span>
@@ -183,7 +190,7 @@
   <div class="wrap foot-links">
     <a href="index.html">Browse jobs</a>
     <a href="locations.html">All locations</a>
-    <a href="guides/index.html">Guides</a>
+    <a href="guides/index.html">Guides</a><a href="verification.html">How we verify</a>
     <a href="employers.html">Post a job</a>
     <a href="about.html">About</a>
     <a href="contact.html">Contact</a>
@@ -220,25 +227,51 @@
 
   let CONFIG = null;
 
-  /* Subscribe form → pre-filled email to the site owner (works with no backend) */
+  /* Subscribe form.
+     1. alerts.email_form_url set → POST straight to the ESP (Buttondown, Brevo,
+        MailerLite, Formspree …). That is a real subscription with real delivery.
+     2. only alerts.owner_email set → pre-filled email to the owner (manual list).
+     3. neither → tell the truth and point at the feed, which already works. */
   document.getElementById('subForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    const to = (CONFIG && CONFIG.alerts && CONFIG.alerts.owner_email) || '';
     const email = document.getElementById('subEmail').value.trim();
     const city = document.getElementById('subCity').value || 'Any';
     const kw = document.getElementById('subKw').value.trim() || '-';
+    const msg = document.getElementById('subMsg');
+    const a = (CONFIG && CONFIG.alerts) || {};
 
-    if (!to) {
-      const msg = document.getElementById('subMsg');
-      msg.hidden = false;
-      msg.textContent = 'Email alerts are being set up right now. Until they are live you can follow the RSS feed — it updates every hour with the newest jobs.';
+    try { localStorage.setItem('rozgar-sub', JSON.stringify({ email, city, kw })); } catch (err) {}
+
+    if (a.email_form_url) {
+      const body = new URLSearchParams({ email: email, city: city, keyword: kw });
+      fetch(a.email_form_url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: body.toString()
+      }).then(function (r) {
+        msg.hidden = false;
+        msg.textContent = r.ok
+          ? 'You are on the list. The first digest arrives tomorrow morning — check your spam folder once and mark it as “not spam”.'
+          : 'That did not go through. Please try again, or follow the RSS feed instead.';
+      }).catch(function () {
+        msg.hidden = false;
+        msg.textContent = 'That did not go through. Please try again, or follow the RSS feed instead.';
+      });
       return;
     }
-    const body = 'SUBSCRIBE ROZGAR ALERTS\nEmail: ' + email + '\nCity: ' + city + '\nKeywords: ' + kw;
-    try { localStorage.setItem('rozgar-sub', JSON.stringify({ email, city, kw })); } catch (err) {}
-    location.href = 'mailto:' + to +
-      '?subject=' + encodeURIComponent('SUBSCRIBE: RozgarJobs job alerts') +
-      '&body=' + encodeURIComponent(body);
+
+    if (a.owner_email) {
+      const body = 'SUBSCRIBE ROZGAR ALERTS\nEmail: ' + email + '\nCity: ' + city + '\nKeywords: ' + kw;
+      location.href = 'mailto:' + a.owner_email +
+        '?subject=' + encodeURIComponent('SUBSCRIBE: RozgarJobs job alerts') +
+        '&body=' + encodeURIComponent(body);
+      return;
+    }
+
+    msg.hidden = false;
+    msg.innerHTML = 'Email delivery is not switched on yet. It already works another way: ' +
+      '<a href="feed.xml" style="color:inherit;text-decoration:underline;font-weight:650">subscribe to the feed</a> ' +
+      'in any RSS reader or in Gmail (Gmail → free RSS reader), and you get every new job as it is published.';
   });
 
   fetch('data/site-config.json', { cache: 'no-store' })

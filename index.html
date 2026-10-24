@@ -69,7 +69,7 @@
   /* Filter pages are duplicates for search engines — keep only the clean home indexable */
   (function () {
     var p = new URLSearchParams(location.search);
-    var facets = ["q","city","category","type","level","remote","pk","saved","page","tag"];
+    var facets = ["q","city","category","type","level","remote","pk","saved","page","tag","scope","closing","fresh","qual"];
     if (facets.some(function (k) { return p.has(k); })) {
       var m = document.createElement("meta");
       m.name = "robots"; m.content = "noindex,follow";
@@ -154,6 +154,18 @@
   </div>
 </section>
 
+<!-- ── scope tabs: Pakistan is the default ───────────────────── -->
+<div class="scope-wrap">
+  <div class="wrap scope-in">
+    <div class="scope-tabs" id="scopeTabs" role="tablist" aria-label="Job scope">
+      <button role="tab" data-scope="pk" class="on" aria-selected="true">Pakistan <span id="scPk">—</span></button>
+      <button role="tab" data-scope="remote" aria-selected="false">Remote <span id="scRemote">—</span></button>
+      <button role="tab" data-scope="intl" aria-selected="false">International <span id="scIntl">—</span></button>
+      <button role="tab" data-scope="all" aria-selected="false">All <span id="scAll">—</span></button>
+    </div>
+  </div>
+</div>
+
 <!-- ── quick filters ──────────────────────────────────────────── -->
 <div class="filterbar" id="filterbar">
   <div class="wrap filter-in">
@@ -179,10 +191,21 @@
         <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M3 21h18M4 21V10l8-5 8 5v11M9 21v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Government
       </button>
-      <button class="toggle" id="pakOnly" aria-pressed="false" title="Jobs open to candidates in Pakistan">
-        <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 21s6.5-5.4 6.5-10.5a6.5 6.5 0 1 0-13 0C5.5 15.6 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="10.4" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-        Open to Pakistan
+      <button class="toggle" id="closingSoon" aria-pressed="false" title="Jobs whose last date is within 7 days">
+        <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 7.5V12l3 1.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        Closing this week
       </button>
+      <button class="toggle" id="noExp" aria-pressed="false" title="Jobs open to fresh graduates">
+        <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M3 9l9-5 9 5-9 5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M7 11.5V16c0 1 2.2 2.5 5 2.5s5-1.5 5-2.5v-4.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+        No experience
+      </button>
+      <select id="qual" aria-label="Qualification">
+        <option value="">Any qualification</option>
+        <option value="matric">Matric</option>
+        <option value="inter">Intermediate</option>
+        <option value="bachelor">Bachelor's</option>
+        <option value="master">Master's</option>
+      </select>
       <button class="toggle" id="savedOnly" aria-pressed="false">
         <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 3.6l2.6 5.4 5.9.8-4.3 4.1 1.1 5.8L12 16.9 6.7 19.7l1.1-5.8L3.5 9.8l5.9-.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
         Saved <span id="savedCount" class="mini-count">0</span>

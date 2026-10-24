@@ -1,0 +1,139 @@
+name: Post a job
+description: Employers — publish a vacancy on RozgarJobs. Takes 2 minutes and costs nothing.
+title: "[Job] "
+labels: ["job-submission", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before you submit**
+        - This form is for real vacancies only. Every posting is checked by hand before it appears.
+        - We never charge candidates and we never ask for a fee, a "registration" payment or CNIC photos.
+        - Your listing appears within one hour of approval and stays live until the closing date.
+        - A full advertisement is **not** required — the fields below are enough.
+
+  - type: input
+    id: job_title
+    attributes:
+      label: Job title
+      description: "Write the position, not the advertisement. Example: Junior Clerk, Staff Nurse, Sales Officer."
+      placeholder: "Junior Clerk"
+    validations:
+      required: true
+
+  - type: input
+    id: company
+    attributes:
+      label: Employer name
+      description: The organisation that is hiring. Do not write "private company".
+      placeholder: "District and Session Court, Peshawar"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sector
+    attributes:
+      label: Sector
+      options:
+        - Government
+        - Private
+        - Semi-government
+        - NGO / INGO
+        - Remote / international
+    validations:
+      required: true
+
+  - type: input
+    id: city
+    attributes:
+      label: City
+      description: Main duty station. Write "All Pakistan" if the post is open nationwide, or "Remote".
+      placeholder: "Peshawar"
+    validations:
+      required: true
+
+  - type: input
+    id: vacancies
+    attributes:
+      label: Number of vacancies
+      description: Leave empty if the advertisement does not say.
+      placeholder: "3"
+
+  - type: input
+    id: qualification
+    attributes:
+      label: Minimum qualification
+      placeholder: "Intermediate, Bachelor's, Master's, Matric"
+
+  - type: input
+    id: experience
+    attributes:
+      label: Experience required
+      placeholder: "Fresh graduates welcome / 2 years"
+
+  - type: input
+    id: age_limit
+    attributes:
+      label: Age limit
+      placeholder: "18–30 years"
+
+  - type: input
+    id: salary
+    attributes:
+      label: Salary or pay scale
+      placeholder: "BPS-11 or PKR 45,000–60,000"
+
+  - type: input
+    id: last_date
+    attributes:
+      label: Last date to apply
+      description: Format YYYY-MM-DD. Applications close at the end of this day.
+      placeholder: "2026-11-15"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What the job involves
+      description: |
+        3–6 lines in your own words: duties, department, who can apply.
+        Do not paste a whole advertisement — a short honest description is enough.
+      placeholder: |
+        The office needs a junior clerk for record keeping and typing.
+        Intermediate pass, typing speed 30 wpm, age 18–30.
+        Written test, then interview at the district office.
+    validations:
+      required: true
+
+  - type: input
+    id: apply_url
+    attributes:
+      label: Apply link
+      description: The employer's own page, form or portal. Must start with https://
+      placeholder: "https://example.gov.pk/careers"
+
+  - type: input
+    id: apply_email
+    attributes:
+      label: Apply email (if there is no link)
+      placeholder: "hr@example.com"
+
+  - type: input
+    id: how_to_apply
+    attributes:
+      label: How to apply
+      description: One line — for example "Send the application form by post to the address in the advertisement."
+      placeholder: "Apply online through the portal, then submit a printed form by post."
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I am authorised to post this vacancy, and it is a real, currently open job.
+          required: true
+        - label: This job is free to apply for. I am not asking candidates for any fee.
+          required: true
+        - label: I understand RozgarJobs may edit the title or description for clarity.
+          required: true

@@ -1,0 +1,88 @@
+name: Ingest job submission
+
+# Turns an approved "Post a job" issue into a real listing in data/manual-jobs.json.
+# No server, no database, no cost: the issue IS the form, GitHub Actions is the backend.
+
+on:
+  issues:
+    types: [opened, labeled, edited]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: ingest-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    # Only run for the job form, and only once a maintainer adds "approved".
+    if: >
+      contains(github.event.issue.labels.*.name, 'job-submission') &&
+      contains(github.event.issue.labels.*.name, 'approved')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Parse the issue form
+        id: parse
+        env:
+          BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: python3 scripts/ingest_issue.py
+
+      - name: Commit the new listing
+        if: steps.parse.outputs.ok == 'true'
+        run: |
+          set -e
+          git config user.name "Rozgar Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/manual-jobs.json
+          if git diff --cached --quiet; then
+            echo "Nothing new to commit"
+          else
+            git commit -m "feat: employer job #${{ github.event.issue.number }} — ${{ steps.parse.outputs.title }}"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: Rebuild the site
+        if: steps.parse.outputs.ok == 'true'
+        run: |
+          python3 -m pip install --quiet pillow "qrcode[pil]" || true
+          python3 scripts/fetch_jobs.py
+
+      - name: Comment on the issue
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          OK: ${{ steps.parse.outputs.ok }}
+          MSG: ${{ steps.parse.outputs.message }}
+        with:
+          script: |
+            const ok = process.env.OK === 'true';
+            const msg = process.env.MSG || '';
+            const body = ok
+              ? `✅ Published.\n\n${msg}\n\nIt is now in the daily build — the listing appears on the site within the hour and is removed automatically after its closing date.`
+              : `⚠️ Not published yet.\n\n${msg}\n\nFix the form and a maintainer can re-approve.`;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+            if (ok) {
+              await github.rest.issues.update({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'closed'
+              });
+            }
