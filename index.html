@@ -96,6 +96,17 @@
   })();
 </script>
 <link rel="alternate" type="application/atom+xml" title="RozgarJobs new jobs" href="feed.xml">
+  <style>
+    .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .qcard { border: 1px solid var(--line); border-radius: 12px; background: var(--surface); padding: 0; overflow: hidden; }
+    .qcard summary { cursor: pointer; padding: 14px 16px; font-weight: 650; font-size: 14.6px; line-height: 1.4; list-style: none; }
+    .qcard summary::-webkit-details-marker { display: none; }
+    .qcard summary::after { content: "+"; float: right; color: var(--muted); margin-left: 12px; font-weight: 400; }
+    .qcard[open] summary::after { content: "–"; }
+    .qcard p { margin: 0; padding: 0 16px 15px; color: var(--ink-2); font-size: 13.8px; line-height: 1.6; }
+    @media (max-width: 720px) { .faq-grid { grid-template-columns: 1fr; } }
+  </style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "inLanguage": "en-PK", "mainEntity": [{"@type": "Question", "name": "How do I find government jobs in Pakistan?", "acceptedAnswer": {"@type": "Answer", "text": "Federal and provincial commissions advertise public-sector posts on their own websites and in newspapers. RozgarJobs collects those advertisements, removes duplicates, and shows each post with its closing date, qualification, age limit and pay scale — so you can check eligibility before you apply."}}, {"@type": "Question", "name": "Are the jobs on RozgarJobs free to apply for?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Searching and applying are free, and no account is needed. Government recruitment never asks a candidate for money; if a listing asks for a fee, a deposit or bank details, it is not genuine."}}, {"@type": "Question", "name": "How often is the job list updated?", "acceptedAnswer": {"@type": "Answer", "text": "Every hour. Vacancies whose closing date has passed are removed, so everything you see on this page is currently open."}}, {"@type": "Question", "name": "What is BPS in a Pakistani government job?", "acceptedAnswer": {"@type": "Answer", "text": "BPS is the Basic Pay Scale, running from BPS-01 to BPS-22. Support staff sit at BPS-01 to BPS-04, clerical and technical posts at BPS-05 to BPS-14, graduate-entry posts at BPS-16 and BPS-17, and senior officer posts at BPS-18 and above."}}]}</script>
 </head>
 <body>
 <a class="skip-link" href="#jobList">Skip to job list</a>>
@@ -128,6 +139,7 @@
       <a href="index.html" class="on">Jobs</a>
       <a href="alerts.html">Alerts</a>
       <a href="employers.html">Post a job</a>
+      <a href="faq.html">Questions</a>
     </nav>
   </div>
 </header>
@@ -325,6 +337,33 @@
       <span class="ad-body">300 × 250 ad space</span>
     </div>
   </aside>
+
+<!-- ── straight answers (static: crawlers and AI assistants read this) ── -->
+<section class="faq-wrap" aria-labelledby="faq-h" style="max-width:1180px;margin:30px auto 6px;padding:0 16px">
+  <h2 id="faq-h" style="font-size:20px;margin:0 0 4px">Questions people ask before applying</h2>
+  <p style="color:var(--muted);font-size:14px;margin:0 0 14px">
+    Short answers, no sign-up. <a href="faq.html" style="color:inherit">All answers →</a>
+  </p>
+  <div class="faq-grid">
+    <details class="qcard">
+      <summary>How do I find government jobs in Pakistan?</summary>
+      <p>Federal and provincial commissions advertise public-sector posts on their own websites and in newspapers. RozgarJobs collects those advertisements, removes duplicates, and shows each post with its closing date, qualification, age limit and pay scale — so you can check eligibility before you apply.</p>
+    </details>
+    <details class="qcard">
+      <summary>Are the jobs on RozgarJobs free to apply for?</summary>
+      <p>Yes. Searching and applying are free, and no account is needed. Government recruitment never asks a candidate for money; if a listing asks for a fee, a deposit or bank details, it is not genuine.</p>
+    </details>
+    <details class="qcard">
+      <summary>How often is the job list updated?</summary>
+      <p>Every hour. Vacancies whose closing date has passed are removed, so everything you see on this page is currently open.</p>
+    </details>
+    <details class="qcard">
+      <summary>What is BPS in a Pakistani government job?</summary>
+      <p>BPS is the Basic Pay Scale, running from BPS-01 to BPS-22. Support staff sit at BPS-01 to BPS-04, clerical and technical posts at BPS-05 to BPS-14, graduate-entry posts at BPS-16 and BPS-17, and senior officer posts at BPS-18 and above.</p>
+    </details>
+  </div>
+</section>
+
 </main>
 
 <!-- ── footer ─────────────────────────────────────────────────── -->

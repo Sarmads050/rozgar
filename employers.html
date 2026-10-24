@@ -12,6 +12,26 @@
 <link rel="apple-touch-icon" href="assets/img/mark.svg">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="alternate" type="application/atom+xml" title="RozgarJobs new jobs" href="feed.xml">
+  <style>
+    .emp-form { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+    .ef-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .ef-field { display: flex; flex-direction: column; gap: 6px; }
+    .ef-field span { font-size: 12.8px; font-weight: 650; color: var(--ink-2); }
+    .ef-field span em { font-style: normal; font-weight: 500; color: var(--muted); }
+    .ef-field input, .ef-field select, .ef-field textarea {
+      font: inherit; font-size: 16px; padding: 11px 13px; border-radius: 10px;
+      border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); width: 100%;
+    }
+    .ef-field textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+    .ef-full { margin-bottom: 12px; }
+    .ef-check { display: flex; gap: 9px; align-items: flex-start; margin: 8px 0; font-size: 13.6px; color: var(--ink-2); }
+    .ef-check input { margin-top: 3px; flex: 0 0 auto; width: 18px; height: 18px; }
+    .ef-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+    .ef-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    #jobMsg.ok { background: #e9f7ee; border-color: #b7e0c3; color: #14532d; }
+    #jobMsg.err { background: #fdecec; border-color: #f3c2c2; color: #7f1d1d; }
+    @media (max-width: 640px) { .ef-row { grid-template-columns: 1fr; } .emp-form { padding: 14px; } }
+  </style>
 </head>
 <body>
 
@@ -77,15 +97,144 @@
     </div>
   </div>
 
-  <div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 22px">
-    <a class="btn-primary" style="display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:11px;text-decoration:none" href="https://github.com/sarmads050/rozgar/issues/new?template=post-a-job.yml" target="_blank" rel="noopener">Post a job — free</a>
-    <a class="btn-ghost" style="display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:11px" href="mailto:hello@rozgarjobs.com">Email us instead</a>
-  </div>
+  <!-- ── live submission form (Supabase) ─────────────────────────────────
+       Falls back to the GitHub issue form when data/site-config.json has no
+       Supabase project yet, so the page is never a dead end. -->
+  <section id="postJob" style="margin:6px 0 30px">
+    <h2>Post a job — 2 minutes</h2>
+    <p style="color:var(--muted);font-size:14.4px;margin:0 0 14px;max-width:70ch">
+      Fill this in and a person reviews it. Approved listings appear on the site
+      within the hour, get their own page with structured data, and are removed
+      automatically after the closing date.
+    </p>
+
+    <form id="jobForm" class="emp-form" novalidate>
+      <div class="ef-row">
+        <label class="ef-field">
+          <span>Job title *</span>
+          <input name="title" required maxlength="120" placeholder="Junior Clerk" autocomplete="off">
+        </label>
+        <label class="ef-field">
+          <span>Employer name *</span>
+          <input name="company" required maxlength="90" placeholder="District and Session Court, Peshawar" autocomplete="organization">
+        </label>
+      </div>
+
+      <div class="ef-row">
+        <label class="ef-field">
+          <span>Sector *</span>
+          <select name="sector" required>
+            <option value="government">Government</option>
+            <option value="private" selected>Private</option>
+            <option value="semi-government">Semi-government</option>
+            <option value="ngo">NGO / INGO</option>
+            <option value="remote">Remote / international</option>
+          </select>
+        </label>
+        <label class="ef-field">
+          <span>City *</span>
+          <input name="city" required maxlength="60" placeholder="Peshawar, or All Pakistan, or Remote">
+        </label>
+      </div>
+
+      <div class="ef-row">
+        <label class="ef-field">
+          <span>Number of vacancies</span>
+          <input name="vacancies" type="number" min="1" max="99999" placeholder="3" inputmode="numeric">
+        </label>
+        <label class="ef-field">
+          <span>Last date to apply *</span>
+          <input name="last_date" type="date" required>
+        </label>
+      </div>
+
+      <div class="ef-row">
+        <label class="ef-field">
+          <span>Minimum qualification</span>
+          <input name="qualification" maxlength="120" placeholder="Intermediate / Bachelor's / Master's">
+        </label>
+        <label class="ef-field">
+          <span>Experience</span>
+          <input name="experience" maxlength="80" placeholder="Fresh graduates welcome / 2 years">
+        </label>
+      </div>
+
+      <div class="ef-row">
+        <label class="ef-field">
+          <span>Age limit</span>
+          <input name="age_limit" maxlength="40" placeholder="18–30 years">
+        </label>
+        <label class="ef-field">
+          <span>Salary or pay scale</span>
+          <input name="salary" maxlength="80" placeholder="BPS-11 or PKR 45,000–60,000">
+        </label>
+      </div>
+
+      <label class="ef-field ef-full">
+        <span>What the job involves * <em>— 3 to 6 lines, your own words</em></span>
+        <textarea name="description" required minlength="40" maxlength="4000" rows="5"
+                  placeholder="The office needs a junior clerk for record keeping and typing. Intermediate pass, typing speed 30 wpm, age 18–30. Written test, then interview at the district office."></textarea>
+      </label>
+
+      <div class="ef-row">
+        <label class="ef-field">
+          <span>Apply link</span>
+          <input name="apply_url" type="url" maxlength="500" placeholder="https://example.gov.pk/careers" inputmode="url">
+        </label>
+        <label class="ef-field">
+          <span>Apply email</span>
+          <input name="apply_email" type="email" maxlength="120" placeholder="hr@example.com" inputmode="email">
+        </label>
+      </div>
+
+      <label class="ef-field ef-full">
+        <span>How to apply</span>
+        <input name="how_to_apply" maxlength="500" placeholder="Send the application form by post to the address in the advertisement.">
+      </label>
+
+      <div class="ef-row">
+        <label class="ef-field">
+          <span>Your name</span>
+          <input name="contact_name" maxlength="80" placeholder="Who should we contact?" autocomplete="name">
+        </label>
+        <label class="ef-field">
+          <span>Your email * <em>— only for verification, never published</em></span>
+          <input name="contact_email" type="email" required maxlength="120" placeholder="you@company.com" autocomplete="email">
+        </label>
+      </div>
+
+      <!-- honeypot: bots fill this, humans never see it -->
+      <div class="ef-hp" aria-hidden="true">
+        <label>Website<input name="website" tabindex="-1" autocomplete="off"></label>
+      </div>
+
+      <label class="ef-check">
+        <input type="checkbox" name="confirm_real" required>
+        <span>This is a real, currently open vacancy and I am authorised to post it.</span>
+      </label>
+      <label class="ef-check">
+        <input type="checkbox" name="confirm_free" required>
+        <span>Applying is free — I am not asking candidates for any fee, deposit or bank details.</span>
+      </label>
+
+      <div class="ef-actions">
+        <button type="submit" class="btn-primary" style="border:0;min-height:48px;padding:0 26px">
+          Submit for review
+        </button>
+        <a class="btn-ghost" id="fallbackForm" style="display:none;min-height:48px;padding:0 20px"
+           href="https://github.com/sarmads050/rozgar/issues/new?template=post-a-job.yml"
+           target="_blank" rel="noopener">Use the backup form instead</a>
+      </div>
+      <p id="jobMsg" role="status" aria-live="polite" hidden
+         style="margin:10px 0 0;font-size:13.6px;line-height:1.55;padding:11px 13px;border-radius:10px;
+                background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)"></p>
+    </form>
+  </section>
 
   <h2>How to publish your ad</h2>
   <div class="steps">
     <div class="step"><div><strong>Prepare your advert</strong><p>Job title, company, city (or “Remote”), job type, salary range, a 150–400 word description, your apply link and contact email. Banner + logo optional but recommended.</p></div></div>
-    <div class="step"><div><strong>Fill in the 2-minute form</strong><p>Open the <a class="side-link" style="display:inline" href="https://github.com/sarmads050/rozgar/issues/new?template=post-a-job.yml" target="_blank" rel="noopener">Post a job form</a>. It asks for the position, employer, city, qualification, closing date and apply link — that is all. No account fee, no sales call.</p></div></div>
+    <div class="step"><div><strong>Fill in the form above</strong><p>Position, employer, city, closing date and an apply link — that is all. No account, no sales call, no fee.</p></div></div>
     <div class="step"><div><strong>We verify it</strong><p>A person checks the employer exists, the apply link is real and the terms are honest — usually within a few hours. No fake jobs, no “registration fee” offers. <a class="side-link" style="display:inline" href="verification.html">How we verify listings</a>.</p></div></div>
     <div class="step"><div><strong>It goes live</strong><p>Your listing gets its own page plus a card on the home page. You can ask for edits or removal any time.</p></div></div>
   </div>
@@ -176,6 +325,76 @@
     var t = localStorage.getItem('rozgar-theme');
     if (t) document.documentElement.dataset.theme = t;
   } catch (e) {}
+</script>
+<script src="assets/js/supabase-client.js" defer></script>
+<script>
+  (function () {
+    var form = document.getElementById('jobForm');
+    if (!form) return;
+    var msg = document.getElementById('jobMsg');
+    var fallback = document.getElementById('fallbackForm');
+
+    function say(text, kind) {
+      msg.hidden = false;
+      msg.textContent = text;
+      msg.className = kind || '';
+    }
+
+    /* Supabase off → show the backup route instead of a broken button */
+    window.addEventListener('load', function () {
+      if (!window.RozgarDB) return;
+      window.RozgarDB.ready().then(function (cfg) {
+        if (!cfg) {
+          fallback.style.display = 'inline-flex';
+          say('The instant form is not switched on yet. Use the backup form — it works exactly the same way.');
+        }
+      });
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (form.website && form.website.value) return;      // honeypot
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      if (!window.RozgarDB) {
+        say('This form could not load. Please use the backup form.', 'err');
+        fallback.style.display = 'inline-flex';
+        return;
+      }
+
+      var data = {};
+      new FormData(form).forEach(function (v, k) { data[k] = (v || '').trim(); });
+      delete data.website;
+      delete data.confirm_real;
+      delete data.confirm_free;
+
+      var btn = form.querySelector('button[type=submit]');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      say('Sending your listing…');
+
+      window.RozgarDB.submitJob(data).then(function (res) {
+        btn.disabled = false;
+        btn.textContent = 'Submit for review';
+        if (res.ok) {
+          form.reset();
+          say('Received. A person checks every listing — usually within a few hours. ' +
+              'You will get an email at ' + (data.contact_email || 'the address you gave') +
+              ' when it goes live. Nothing was charged and nothing will be.', 'ok');
+          window.scrollTo({ top: msg.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' });
+        } else if (res.reason === 'not-configured') {
+          fallback.style.display = 'inline-flex';
+          say('The instant form is not switched on yet. Please use the backup form.', 'err');
+        } else {
+          say('That did not go through. Check the closing date is in the future and that you ' +
+              'gave either an apply link or an apply email, then try again — or use the backup form.', 'err');
+          fallback.style.display = 'inline-flex';
+        }
+      });
+    });
+  })();
 </script>
 </body>
 </html>

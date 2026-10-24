@@ -2840,7 +2840,7 @@ def write_sitemaps(jobs, landing_urls):
               f"<url><loc>{esc(base)}/employers.html</loc><lastmod>{now_iso}</lastmod>"
               f"<changefreq>monthly</changefreq><priority>0.5</priority></url>")
     for extra in ("about.html", "contact.html", "alerts.html", "privacy.html", "terms.html",
-                  "locations.html", "verification.html"):
+                  "locations.html", "verification.html", "faq.html"):
         pages += (f"<url><loc>{esc(base)}/{extra}</loc><lastmod>{now_iso}</lastmod>"
                   f"<changefreq>daily</changefreq><priority>0.6</priority></url>")
     for g in sorted(glob.glob(os.path.join(ROOT, "guides", "*.html"))):
@@ -2878,44 +2878,6 @@ def write_sitemaps(jobs, landing_urls):
                 '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
                 + idx + "</sitemapindex>")
 
-    live_count = len([j for j in jobs if j["source"] in SCHEMA_OK])
-    llms = f"""# RozgarJobs
-> Free job board for Pakistan. Government, private and remote vacancies, updated every hour,
-> with the closing date, salary, qualification and age limit on every listing.
-
-Site: {base}/
-Language: English (en-PK)
-Jobs live now: {live_count}
-
-## Main pages
-- [All jobs]({base}/): search and filter every live vacancy
-- [Government jobs]({base}/): filter the Government toggle
-- [Job alerts]({base}/alerts.html): email and RSS alerts
-- [Post a job]({base}/employers.html): employer listings
-- [All locations]({base}/locations.html): every city and category page
-- [Guides]({base}/guides/index.html): NJP, BPS scales, documents, scams
-- [About]({base}/about.html) · [Contact]({base}/contact.html) · [Privacy]({base}/privacy.html) · [Terms]({base}/terms.html)
-
-## City pages
-""" + "".join(f"- [{c} jobs]({base}/jobs-in/{safe_slug(c)}.html)\n" for c in LANDING_CITIES
-              if os.path.exists(os.path.join(ROOT, "jobs-in", f"{safe_slug(c)}.html"))) + f"""
-## Category pages
-""" + "".join(f"- [{c}]({base}/category/{safe_slug(c)}.html)\n" for c in LANDING_CATS
-              if os.path.exists(os.path.join(ROOT, "category", f"{safe_slug(c)}.html"))) + f"""
-## Notes
-- Every job page links to the original advertisement; Rozgar is an index, not the employer.
-- We never charge candidates. Report a listing that asks for money.
-- Machine-readable feeds: [jobs.json]({base}/data/jobs.json) · [RSS]({base}/feed.xml) · [sitemap]({base}/sitemap.xml)
-"""
-    with open(os.path.join(ROOT, "llms.txt"), "w", encoding="utf-8") as f:
-        f.write(llms)
-
-    with open(os.path.join(ROOT, "robots.txt"), "w", encoding="utf-8") as f:
-        f.write("User-agent: *\nAllow: /\n\n"
-                "User-agent: GPTBot\nAllow: /\n\n"
-                "User-agent: Google-Extended\nAllow: /\n\n"
-                f"Sitemap: {base}/sitemap.xml\n"
-                f"# LLM-friendly map: {base}/llms.txt\n")
     return len(chunks)
 
 
@@ -3157,6 +3119,11 @@ def main():
     print(f"     {'':12s} {n_loc:4d} location links")
     n_maps = write_sitemaps(jobs, landing_urls)
     print(f"     {'':12s} {len(landing_urls):4d} SEO pages, {n_maps} sitemaps")
+    try:
+        import ai_visibility
+        ai_visibility.main()
+    except Exception as e:  # noqa: BLE001
+        print(f"  ! AI visibility pack: {type(e).__name__}: {e}", file=sys.stderr)
 
     print(f"\nSaved {len(jobs)} jobs  •  {pages} detail pages  •  "
           f"{meta['companies']} companies  •  {meta['new_today']} new today")

@@ -223,28 +223,54 @@
   </a>
 </nav>
 
+<script src="assets/js/supabase-client.js" defer></script>
 <script>
-  document.getElementById('yr').textContent = new Date().getFullYear();
+  document.getElementById("yr").textContent = new Date().getFullYear();
 
   let CONFIG = null;
 
-  /* Subscribe form.
-     1. alerts.email_form_url set → POST straight to the ESP (Buttondown, Brevo,
-        MailerLite, Formspree …). That is a real subscription with real delivery.
-     2. only alerts.owner_email set → pre-filled email to the owner (manual list).
-     3. neither → tell the truth and point at the feed, which already works. */
+  /* Subscribe form, in order of preference:
+     1. Supabase      → a real row, double opt-in email, our own list
+     2. ESP endpoint  → if email_form_url is set (Buttondown, Brevo, MailerLite)
+     3. mailto        → owner_email, manual list
+     4. honest message + the feed, which always works */
   document.getElementById('subForm').addEventListener('submit', function (e) {
     e.preventDefault();
     const email = document.getElementById('subEmail').value.trim();
-    const city = document.getElementById('subCity').value || 'Any';
-    const kw = document.getElementById('subKw').value.trim() || '-';
+    const city = document.getElementById('subCity').value || '';
+    const kw = document.getElementById('subKw').value.trim();
     const msg = document.getElementById('subMsg');
     const a = (CONFIG && CONFIG.alerts) || {};
 
     try { localStorage.setItem('rozgar-sub', JSON.stringify({ email, city, kw })); } catch (err) {}
 
+    function show(text) { msg.hidden = false; msg.textContent = text; }
+
+    // 1 ── Supabase
+    if (window.RozgarDB) {
+      window.RozgarDB.ready().then(function (cfg) {
+        if (cfg) {
+          window.RozgarDB.subscribe(email, city, kw).then(function (res) {
+            if (res.ok) {
+              show(res.duplicate
+                ? 'That email is already on the list — nothing more to do.'
+                : 'Almost done. Check your inbox for a confirmation link; the first digest comes the morning after you confirm.');
+            } else {
+              show('That did not go through. Please try again in a minute.');
+            }
+          });
+          return;
+        }
+        fallback(email, city, kw, msg, a);
+      });
+      return;
+    }
+    fallback(email, city, kw, msg, a);
+  });
+
+  function fallback(email, city, kw, msg, a) {
     if (a.email_form_url) {
-      const body = new URLSearchParams({ email: email, city: city, keyword: kw });
+      const body = new URLSearchParams({ email: email, city: city || 'Any', keyword: kw || '-' });
       fetch(a.email_form_url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
@@ -260,20 +286,19 @@
       });
       return;
     }
-
     if (a.owner_email) {
-      const body = 'SUBSCRIBE ROZGAR ALERTS\nEmail: ' + email + '\nCity: ' + city + '\nKeywords: ' + kw;
+      const body = 'SUBSCRIBE ROZGAR ALERTS\nEmail: ' + email + '\nCity: ' + (city || 'Any') +
+                   '\nKeywords: ' + (kw || '-');
       location.href = 'mailto:' + a.owner_email +
         '?subject=' + encodeURIComponent('SUBSCRIBE: RozgarJobs job alerts') +
         '&body=' + encodeURIComponent(body);
       return;
     }
-
     msg.hidden = false;
     msg.innerHTML = 'Email delivery is not switched on yet. It already works another way: ' +
       '<a href="feed.xml" style="color:inherit;text-decoration:underline;font-weight:650">subscribe to the feed</a> ' +
-      'in any RSS reader or in Gmail (Gmail → free RSS reader), and you get every new job as it is published.';
-  });
+      'in any RSS reader, and you get every new job as it is published.';
+  }
 
   fetch('data/site-config.json', { cache: 'no-store' })
     .then(r => r.ok ? r.json() : null)

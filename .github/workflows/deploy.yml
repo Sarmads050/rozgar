@@ -55,6 +55,15 @@ jobs:
           fi
           echo "final URL: $(tail -1 "$GITHUB_OUTPUT")"
 
+      # Approved employer submissions come out of Supabase first, so a job the
+      # team approved in the last hour is on the site in this same build.
+      # Without the secret this is a no-op — the build simply carries on.
+      - name: Pull approved employer submissions
+        env:
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python3 scripts/export_submissions.py || echo "export skipped"
+
       # Jobs are fetched fresh on every run. Nothing is committed back except the
       # tiny alert state file, so the repository stays small.
       - name: Install poster dependencies
@@ -85,14 +94,20 @@ jobs:
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
         run: python scripts/send_alerts.py
 
-      - name: Save alert state
+      # Two small things go back into the repo: the alert state, and any newly
+      # approved employer listings. The listings must persist — if Supabase has a
+      # bad hour, a page that Google already knows about should not disappear.
+      - name: Save alert state and approved listings
         continue-on-error: true
         run: |
-          if [ -f .alerts-state.json ]; then
-            git config user.name  "rozgar-bot"
-            git config user.email "bot@users.noreply.github.com"
-            git add .alerts-state.json
-            git diff --cached --quiet || git commit -m "chore: update alert state [skip ci]"
+          git config user.name  "rozgar-bot"
+          git config user.email "bot@users.noreply.github.com"
+          [ -f .alerts-state.json ] && git add .alerts-state.json
+          git add data/manual-jobs.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "Nothing to save."
+          else
+            git commit -m "chore: update alert state and approved listings [skip ci]"
             git push origin HEAD:main
           fi
 

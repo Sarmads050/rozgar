@@ -29,5 +29,11 @@
   "cloudflare_token": "",
   "plausible_domain": "",
   "track_search": true
+ },
+ "supabase": {
+  "_readme": "Create a project at supabase.com, run supabase/schema.sql, then paste the Project URL and the anon public key here. The anon key is designed to be public — Row Level Security protects the data. Never put the service_role key in this file.",
+  "url": "",
+  "anon_key": "",
+  "enabled": false
  }
 }

@@ -119,6 +119,26 @@ def main():
                  tick(wa_on)))
     rows.append(("RSS / Atom feed", "feed.xml" if feed else "missing", tick(feed)))
 
+    # ── AI / answer-engine readiness (ChatGPT, Perplexity, Gemini, Copilot)
+    llms = read("llms.txt")
+    llms_full = read("llms-full.txt")
+    robots = read("robots.txt")
+    faq = read("faq.html")
+    mirrors = len(glob.glob(os.path.join(ROOT, "jobs", "*.txt")))
+    ai_bots = ("GPTBot", "OAI-SearchBot", "ChatGPT-User", "PerplexityBot", "ClaudeBot",
+               "Google-Extended", "Bingbot", "Applebot-Extended")
+    bots_allowed = [b for b in ai_bots if f"User-agent: {b}" in robots]
+    home_faq = 'class="qcard"' in read("index.html")
+    rows.append(("llms.txt for AI assistants", f"{len(llms):,} bytes" if llms else "missing",
+                 tick(len(llms) > 1500)))
+    rows.append(("Full plain-text corpus", f"{len(llms_full) // 1024:,} KB" if llms_full else "missing",
+                 tick(len(llms_full) > 20000)))
+    rows.append(("Plain-text mirror per job page", f"{mirrors:,} files", tick(mirrors > 20)))
+    rows.append(("AI crawlers explicitly allowed", f"{len(bots_allowed)} of {len(ai_bots)}",
+                 tick(len(bots_allowed) == len(ai_bots))))
+    rows.append(("Quotable Q&A on the home page + FAQ hub",
+                 "both" if (home_faq and faq) else "incomplete", tick(home_faq and faq)))
+
     # ── what to do next, in priority order
     todo = []
     if not (analytics_on and alerts_on and wa_on):
@@ -133,6 +153,14 @@ def main():
                     "removes them automatically the day after.")
     todo.append("Buy `rozgarjobs.com` when you can (see §5). A shared `github.io` subfolder is the "
                 "single biggest ceiling on this site.")
+    todo.append("Get cited, not just indexed. Answer engines quote pages that other sites already "
+                "mention: submit the site to Pakistani job aggregators, university career pages and "
+                "any forum thread that asks where to find sarkari jobs. One real mention beats "
+                "fifty tone-deaf directories.")
+    todo.append("Ask ChatGPT, Perplexity and Gemini the same question a candidate would "
+                "(\"government jobs in Karachi this week\") once a month and note whether "
+                "RozgarJobs appears. That is the only honest AI-visibility measurement — there is "
+                "no console for it yet.")
     todo.append("In Search Console, open **Pages** weekly and look at *Discovered – currently not "
                 "indexed*. New pages that stay stuck there mean the content is too thin — add a "
                 "paragraph of genuine detail, do not resubmit.")
