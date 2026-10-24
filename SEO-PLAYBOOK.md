@@ -101,3 +101,38 @@ python3 scripts/ping_indexnow.py  # push changed URLs
 Then in Search Console: **Pages → Not indexed**. If "Crawled – currently not indexed"
 grows, the page is thin — merge it or add real data. If "Discovered – not indexed"
 grows, the site is too big for its authority — slow down publishing.
+
+---
+
+## 6. What changed in this build (October 2026 audit, all ten items)
+
+| # | Item | Where it lives now |
+|---|---|---|
+| 1 | Pakistan-first content mix | Scope tabs on the home page default to **Pakistan**; German/irrelevant on-site jobs are dropped by the relevance gate before a page is created |
+| 2 | More Pakistani jobs | NJP + JobsAlert.pk (WP API, 100/page) + Ilmkidunya (12 listing pages) — per-source cap raised to 320 |
+| 3 | Data cleanup | `clean_employer()` + `display_title()` strip ad-speak, "PO Box" employers and keyword-stuffed titles; duplicates collapse on title+employer |
+| 4 | Post a job | `.github/ISSUE_TEMPLATE/post-a-job.yml` → `ingest-issue.yml` → `scripts/ingest_issue.py` (validated, auto-published on the `approved` label) |
+| 5 | Email alerts | `feed.xml` (60 newest, hourly) → point any RSS-to-email service at it; `alerts.html` posts to `email_form_url` once set |
+| 6 | Analytics | `assets/js/analytics.js` — GoatCounter / Cloudflare / Plausible, off until configured in `data/site-config.json` |
+| 7 | WhatsApp | `whatsapp.yml` builds a ready-to-paste post pack every 3 hours; optional CallMeBot delivery |
+| 8 | Google Indexing API | `index_jobs.py` + `index-new-jobs.yml`, guarded by the `GOOGLE_INDEXING_KEY` secret |
+| 9 | Search & filters | Scope tabs, closing-this-week, no-experience, qualification, BPS chips, synonym expansion ("teacher" → lecturer/educator) |
+| 10 | Recovery, speed, access | Expired-job 404 with similar jobs, WebP posters (≈60% smaller) behind `<picture>`, skip link, focus rings, gold contrast fixed to 5:1, `verification.html` editorial policy |
+
+### Pages that must exist before the next audit
+- `sarkari-naukri.html` — the single biggest head term in Pakistan
+- `fpsc-jobs.html`, `ppsc-jobs.html`, `nts-jobs.html`, `police-jobs.html` — commission pages with editorial body copy, rebuilt every hour with live posts merged in
+- `punjab-jobs.html`, `sindh-jobs.html`, `kpk-jobs.html` (+ Balochistan once it clears 5 live jobs)
+
+### Weekly routine (10 minutes)
+1. Search Console → **Pages** → check "Discovered – currently not indexed" for new landing pages.
+2. Search Console → **Performance** → note any query where a keyword page ranks 5–20; add one paragraph of genuinely new information to that page.
+3. GoatCounter (once configured) → top `/search/…` terms with zero results → those are your next job sources.
+4. Add **one** new guide per week from real questions people ask (the guides already use FAQPage schema).
+5. Never publish more than 10 new landing pages in a week — that is the shape of a spam signal, not a growth plan.
+
+### What still needs a human
+Buy `rozgarjobs.com` and move the site there. A subfolder on `github.io` competes with a
+handicap: shared host reputation, no domain age, no brand searches. The domain is the
+single largest remaining ranking factor this project can control. See
+`SETUP-BACKEND.md` §5 for the exact steps and the Search Console *Change of address* step.

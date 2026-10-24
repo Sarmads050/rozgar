@@ -906,3 +906,27 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
   .poster-thumb img { transition: none !important; }
   .job-card.poster-card:hover .poster-thumb img { transform: none !important; }
 }
+
+/* hidden attribute must win over the band's display rules */
+#pkBand[hidden] { display: none !important; }
+
+/* ── desktop: tighten the chrome so the feed starts high ───────────
+   Five stacked strips (hero, stats, scope tabs, categories, filters)
+   were pushing the first job card to ~700px. Compact each one. */
+@media (min-width: 641px) {
+  .hero { padding: 22px 0 14px; }
+  .hero h1 { font-size: clamp(26px, 2.5vw, 33px); margin-bottom: 6px; }
+  .hero-sub { font-size: 14.2px; margin-bottom: 14px; }
+  .searchbar { margin-bottom: 2px; }
+  .popular { margin-top: 8px; gap: 6px; }
+  .popular .pill, .popular .pop-chip, .popular a { font-size: 12px; padding: 5px 10px; }
+  .stat-strip { margin-top: 10px; gap: 6px; }
+  .stat-strip span { font-size: 12px; padding: 4px 10px; }
+  .scope-in { padding-top: 6px; padding-bottom: 6px; }
+  .scope-tabs button { min-height: 32px; padding: 5px 13px; font-size: 12.8px; }
+  .cats { padding-top: 5px; padding-bottom: 5px; }
+  .filterbar { padding-top: 8px; padding-bottom: 8px; }
+  .filters select, .filters .toggle, .filters .btn-mini { min-height: 34px; font-size: 12.8px; }
+  .results-head { margin: 10px 0 8px; }
+  .results-head h2 { font-size: 16px; }
+}

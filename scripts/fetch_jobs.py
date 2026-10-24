@@ -421,18 +421,47 @@ _DEPT_WORDS = ("department", "authority", "commission", "ministry", "university"
                "army", "navy", "air force", "police", "court", "bank", "psc")
 
 
+# Pakistani boards sometimes put the whole advertisement in the employer field
+# ("Latest Advertisement PO Box 95 GPO Rawalpindi Jobs 2026"). That is not an
+# employer and it repeats the title on every card.
+AD_AS_EMPLOYER = ("po box", "jobs 2026", "jobs 2025", "last date", "application form",
+                  "advertisement", "apply online", "test & interview", "vacancy",
+                  "www.", "click here", "read more", "government jobs in")
+
+
 def clean_employer(job):
     """Replace placeholder employer names with something a reader can trust."""
     name = (job.get("company") or "").strip()
     low = name.lower().strip(" .")
+    title = (job.get("title") or "")
 
-    if low not in GENERIC_EMPLOYERS:
-        return name
+    junk = low in GENERIC_EMPLOYERS or any(k in low for k in AD_AS_EMPLOYER)
 
-    title = (job.get("title") or "").lower()
-    if any(w in title for w in _DEPT_WORDS) or (job.get("sector") == "government"):
-        return "Government of Pakistan"
-    return "Private sector employer"
+    if junk:
+        # 1. the title usually still names the real employer
+        m = re.search(r"\b(?:in|at|join)\s+([A-Z][A-Za-z&.\- ]{3,40}?"
+                      r"(?:Department|Authority|Commission|Ministry|University|College|"
+                      r"Hospital|Board|Council|Office|Directorate|Institute|Court|Bank|"
+                      r"Corporation|Company|Limited|Ltd|Force|Police|Army|Navy))", title)
+        if m:
+            name = re.sub(r"\s+jobs?\b.*$", "", m.group(1), flags=re.I).strip(" ,-")
+            # keep the place name that follows the organisation type
+            tail = title[m.end():]
+            tail = re.match(r"(?:,?\s+)([A-Z][A-Za-z.\-]+(?:\s+[A-Z][A-Za-z.\-]+)?)", tail)
+            if tail and tail.group(1).lower() not in ("jobs", "job"):
+                name = f"{name} {tail.group(1)}".strip()
+        # 2. otherwise be honest about what kind of employer it is
+        elif job.get("sector") == "government" or any(w in title.lower() for w in _DEPT_WORDS):
+            name = "Government of Pakistan"
+        else:
+            name = "Private sector employer"
+
+    # a PO Box is a real, verifiable address — keep it when nothing else exists
+    box = re.search(r"PO ?Box\s*\d+", title, re.I)
+    if box and name in ("Government of Pakistan", "Private sector employer"):
+        name = f"{name} ({box.group(0)})"
+
+    return name.strip()
 
 
 def display_title(job, limit=72):
@@ -481,9 +510,21 @@ def display_title(job, limit=72):
     t = re.sub(r"^\s*[-–|]\s*", "", t)
 
     if not t or len(t) < 4 or len(t.split()) < 2:
-        emp = (job.get("company") or "").strip()
-        generic = ("private company", "government company", "not specified", "")
-        t = f"Latest posts — {emp}" if emp.lower() not in generic else raw
+        # Prefer whatever survives in the original title ("PO Box 95 GPO
+        # Rawalpindi") over the employer label — "latest posts — government of
+        # pakistan" tells a reader nothing.
+        salvage = re.sub(r"(?i)^\s*(?:latest|new)\s+", "", raw)
+        salvage = re.sub(r"(?i)^(?:advertisement|advert|advt)[\s.:\-]*", "", salvage)
+        salvage = re.sub(r"(?i)\b(?:jobs?|vacancies?)\s*20\d{2}\b", "", salvage)
+        salvage = re.sub(r"(?i)\b(?:last date|apply by|test\s*(?:&|and)\s*interview|"
+                         r"application form|download)\b.*$", "", salvage)
+        salvage = re.sub(r"\s{2,}", " ", salvage).strip(" -–|,")
+        if len(salvage.split()) >= 2:
+            t = salvage
+        else:
+            emp = (job.get("company") or "").strip()
+            generic = ("private company", "government company", "not specified", "")
+            t = f"Latest posts — {emp}" if emp.lower() not in generic else raw
 
     if len(t) > limit:
         cut = t[:limit].rsplit(" ", 1)[0]

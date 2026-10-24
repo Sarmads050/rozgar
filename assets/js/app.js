@@ -343,6 +343,11 @@ function daysLeft(iso) {
 
 /* Pakistan band: horizontal posters */
 function renderPkStrip() {
+  /* The scope tabs already default to Pakistan, so this band would show the
+     same jobs twice and push the real feed below the fold. Keep it only when
+     the visitor is looking at Remote / International / All. */
+  const band = $("#pkBand");
+  if (band) band.hidden = state.scope === "pk";
   const today = new Date().toISOString().slice(0, 10);
   const pkAll = state.jobs.filter((j) => j.is_pk && (!j.last_date || j.last_date >= today));
   const withPoster = pkAll.filter((j) => j.poster);
