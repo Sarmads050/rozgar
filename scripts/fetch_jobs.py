@@ -1478,15 +1478,16 @@ def build_page(job, related):
     src_url = job.get("source_url") or job.get("url") or ""
     source_link = (f'<a href="{esc(src_url)}" target="_blank" rel="noopener noreferrer">{esc(job["source"])}</a>'
                    if src_url else esc(job["source"]))
-    rel_extra = ' nofollow' if job["source"] not in SCHEMA_OK else ""
+    rel_extra = "" if is_indexable(job) else " nofollow"
 
     # ── SEO strings: "{Job Title} — {Employer} — {City} | RozgarJobs"
     city = (job.get("location") or "").split(",")[0].strip() or "Pakistan"
-    seo_title = f'{job["title"]} — {job.get("company","")} — {city} | RozgarJobs'
+    read_title = job.get("display_title") or job["title"]
+    seo_title = f'{read_title} — {job.get("company","")} — {city} | RozgarJobs'
     if len(seo_title) > 68:
-        seo_title = f'{job["title"][:44]} — {city} | RozgarJobs'
+        seo_title = f'{read_title[:44]} — {city} | RozgarJobs'
 
-    kw_parts = [job["title"], job.get("company"), city, "job", "jobs in pakistan",
+    kw_parts = [read_title, job.get("company"), city, "job", "jobs in pakistan",
                 job.get("category") or "", job.get("qualification") or "",
                 "government job" if job.get("sector") == "government" else "private job"]
     keywords = ", ".join(dict.fromkeys(k.strip() for k in kw_parts if k and k.strip()))[:280]
@@ -1501,11 +1502,11 @@ def build_page(job, related):
     return PAGE.format(
         page_title=esc(seo_title),
         keywords=esc(keywords),
-        title=esc(job["title"]),
+        title=esc(read_title),
         company=esc(job["company"]),
-        short_title=esc(job["title"][:46] + ("…" if len(job["title"]) > 46 else "")),
+        short_title=esc(read_title[:46] + ("…" if len(read_title) > 46 else "")),
         meta_desc=esc(seo_desc[:300]),
-        robots="index,follow" if job["source"] in SCHEMA_OK else "noindex,follow",
+        robots="index,follow" if is_indexable(job) else "noindex,follow",
         canonical=esc(canonical),
         og_image=esc((SITE_URL + "/posters/" + job["slug"] + "-og.jpg") if job.get("og") and SITE_URL
                      else (logo_url or "")),
@@ -2044,7 +2045,7 @@ KEYWORD_PAGE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39; &#39;unsafe-inline&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src &#39;self&#39; https: data:; font-src &#39;self&#39; data:; connect-src &#39;self&#39; https:; form-action &#39;self&#39; mailto:; base-uri &#39;self&#39;; object-src &#39;none&#39;">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>{title} ({count} Open) | RozgarJobs</title>
+<title>{title}{count_suffix} | RozgarJobs</title>
 <meta name="description" content="{desc}">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="{canonical}">
@@ -2188,6 +2189,7 @@ def build_keyword_pages(jobs, made_before):
 
         html_out = KEYWORD_PAGE.format(
             title=esc(title), desc=esc(desc), canonical=esc(f"{base}/{slug}.html"),
+            count_suffix=(f" ({f['total']} Open)" if f["total"] else ""),
             base=esc(base), json_ld=ld, crumb=esc(crumb),
             h1=esc(title.split("—")[0].strip()),
             count=f["total"],
@@ -2428,6 +2430,7 @@ def build_commission_pages(jobs, base):
 
         html_out = KEYWORD_PAGE.format(
             title=esc(c["title"]), desc=esc(c["desc"]), canonical=esc(f"{base}/{c['slug']}.html"),
+            count_suffix=(f" ({f['total']} Open)" if f and f['total'] else ""),
             base=esc(base), json_ld=ld, crumb=esc(c["h1"]), h1=esc(c["h1"]),
             count=(f["total"] if f else 0),
             intro=intro + body, intro_rest="",
