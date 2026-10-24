@@ -74,6 +74,24 @@ KEEP_DAYS = 45
 # content republish karke schema dena unki terms ke khilaf ho sakta hai.
 SCHEMA_OK = {"Arbeitnow", "Jobicy", "Himalayas", "Remotive", "Manual", "Employer", "NJP"}
 
+# Sourced pages may still be worth indexing when they carry enough of our own
+# writing: a real description (not a two-line excerpt), a closing date, a named
+# employer and a place. Thin re-posts stay noindex — that is what keeps the
+# site out of Google's "scaled content abuse" bucket.
+THIN_EMPLOYERS = {"government of pakistan", "private sector employer", "not specified", ""}
+
+
+def is_indexable(job):
+    if job.get("source") in SCHEMA_OK:
+        return True
+    if job.get("indexable") is not None:
+        return bool(job["indexable"])
+    desc = (job.get("description_text") or "").strip()
+    return (len(desc) >= 220
+            and bool(job.get("last_date"))
+            and bool(job.get("location"))
+            and (job.get("company") or "").strip().lower() not in THIN_EMPLOYERS)
+
 CATEGORIES = [
     "Software Development", "Data & Analytics", "Design", "Product",
     "Marketing", "Sales", "Customer Support", "Finance & Accounting",
@@ -547,6 +565,67 @@ def display_title(job, limit=72):
     return t or raw
 
 
+
+def enrich_description(job):
+    """Pakistani job boards publish the facts, not the prose. Build a readable
+    summary from those facts so the page is genuinely useful (and long enough to
+    be worth indexing) instead of a two-line stub."""
+    facts = []
+    if job.get("qualification"):
+        facts.append(f"qualification {job['qualification']}")
+    if job.get("experience") and job["experience"].lower() not in ("not specified", "-"):
+        facts.append(f"experience {job['experience']}")
+    if job.get("age_limit"):
+        facts.append(f"age limit {job['age_limit']}")
+    if job.get("bps"):
+        facts.append(f"pay scale {job['bps']}")
+    if job.get("salary"):
+        facts.append(f"salary {job['salary']}")
+    if job.get("vacancies"):
+        facts.append(f"{job['vacancies']} vacancies")
+    if job.get("last_date"):
+        facts.append(f"applications close on {job['last_date']}")
+
+    if len(facts) < 3:
+        return job  # not enough substance — the page stays noindex
+
+    title = job.get("display_title") or job.get("title") or "This post"
+    employer = job.get("company") or "the employer"
+    where = job.get("location") or "Pakistan"
+    lines = [f"{title} is open at {employer} in {where}."]
+    lines.append("The advertisement lists " + ", ".join(facts[:-1]) +
+                 (f" and {facts[-1]}." if len(facts) > 1 else "."))
+
+    if job.get("sector") == "government":
+        lines.append("This is a government post, so selection follows the department's own "
+                     "procedure — a written test and interview in most cases. Government "
+                     "departments check eligibility strictly on the closing date: the degree, "
+                     "the experience and the age limit must match on that date, not later.")
+    else:
+        lines.append("The employer runs its own shortlisting, usually a test or an interview, "
+                     "and contacts shortlisted candidates directly.")
+
+    how = (job.get("how_to_apply") or "").strip()
+    if how:
+        lines.append("How to apply: " + one_line(how, 320))
+    else:
+        lines.append("Apply through the source advertisement — the apply button on this page "
+                     "opens the original posting.")
+
+    if job.get("last_date"):
+        try:
+            left = (datetime.strptime(job["last_date"], "%Y-%m-%d").date() - datetime.now(timezone.utc).date()).days
+            if 0 <= left <= 7:
+                lines.append(f"Only {left} day{'s' if left != 1 else ''} left — send the "
+                             f"application before the closing date, not after.")
+        except (ValueError, TypeError):
+            pass
+
+    job["description_text"] = ((job.get("description_text") or "").strip() + "\n\n" +
+                               " ".join(lines)).strip()
+    return job
+
+
 def finish(job):
     """Shared post-processing."""
     for key in ("title", "company", "location"):
@@ -560,6 +639,14 @@ def finish(job):
     job["region"] = job.get("region") or ("Worldwide" if (generic_loc and job.get("remote"))
                                           else norm_region(job.get("location", "")))
     job["salary"] = job.get("salary") or salary_string(job)
+    job = enrich_description(job)
+    # decide indexability while the full description is still in memory
+    _desc = (job.get("description_text") or "").strip()
+    job["indexable"] = (job.get("source") in SCHEMA_OK or
+                        (len(_desc) >= 220
+                         and bool(job.get("last_date"))
+                         and bool(job.get("location"))
+                         and (job.get("company") or "").strip().lower() not in THIN_EMPLOYERS))
     job["summary"] = one_line(job.get("summary") or job.get("description_text", ""), SUMMARY_LIMIT)
     job["tags"] = [t for t in dict.fromkeys(job.get("tags", [])) if t][:8]
     job["pak_friendly"] = pakistan_friendly(job)
@@ -1321,7 +1408,7 @@ def build_page(job, related):
               f'<div class="apply-bar-txt"><strong>{esc(job["title"][:48])}</strong>'
               f'<span>{esc(city_label)} · via {esc(job["source"])}</span></div>'
               f'<a class="btn-apply" href="{esc(job.get("url") or "#")}" target="_blank" '
-              f'rel="noopener noreferrer{"" if job["source"] in SCHEMA_OK else " nofollow"}">'
+              f'rel="noopener noreferrer{"" if is_indexable(job) else " nofollow"}">'
               f'Apply on {esc(job["source"])} →</a></div></div>')
     canonical = f"{SITE_URL}/jobs/{job['slug']}.html" if SITE_URL else f"jobs/{job['slug']}.html"
     logo_url = job.get("company_logo") or ""
@@ -2517,7 +2604,7 @@ def write_sitemaps(jobs, landing_urls):
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     base = SITE_URL or ""
     chunks, per_file = [], 20000
-    indexable = [j for j in jobs if j["source"] in SCHEMA_OK]
+    indexable = [j for j in jobs if is_indexable(j)]
 
     for i in range(0, len(indexable), per_file):
         part = indexable[i:i + per_file]
@@ -2699,10 +2786,12 @@ def main():
         j["level"] = norm_level(j["title"])
         j["description_text"] = j.get("description_text") or j.get("description") or ""
         enforce_english(j)                      # site is English-only
+        j = finish(j)                           # enrichment + indexability + slug
+        j["is_pk"] = True
+        j["pak_friendly"] = True
+        j["region"] = "Asia"
+        j["remote"] = False
         j["description"] = j["description_text"]
-        j["company"] = clean_employer(j)
-        j["display_title"] = display_title(j)
-        j["summary"] = one_line(j.get("description") or j.get("how_to_apply") or j["title"], SUMMARY_LIMIT)
 
     expired_pk = 0
     live = []

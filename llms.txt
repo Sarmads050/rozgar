@@ -4,7 +4,7 @@
 
 Site: https://sarmads050.github.io/rozgar/
 Language: English (en-PK)
-Jobs live now: 147
+Jobs live now: 184
 
 ## Main pages
 - [All jobs](https://sarmads050.github.io/rozgar/): search and filter every live vacancy
@@ -19,7 +19,6 @@ Jobs live now: 147
 - [Karachi jobs](https://sarmads050.github.io/rozgar/jobs-in/karachi.html)
 - [Lahore jobs](https://sarmads050.github.io/rozgar/jobs-in/lahore.html)
 - [Islamabad jobs](https://sarmads050.github.io/rozgar/jobs-in/islamabad.html)
-- [Rawalpindi jobs](https://sarmads050.github.io/rozgar/jobs-in/rawalpindi.html)
 - [Peshawar jobs](https://sarmads050.github.io/rozgar/jobs-in/peshawar.html)
 
 ## Category pages

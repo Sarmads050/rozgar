@@ -28,7 +28,7 @@ from datetime import date
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/122.0 Safari/537.36")
-TIMEOUT = 30
+TIMEOUT = 12
 MAX_PER_SOURCE = 320
 
 SOURCES_ENABLED = {"njp": True, "jobsalert": True, "ilmkidunya": True}
@@ -38,7 +38,7 @@ WS_RE = re.compile(r"\s+")
 
 
 # ── http ────────────────────────────────────────────────────────────────────
-def _get(url, accept="text/html", retries=2):
+def _get(url, accept="text/html", retries=1):
     last = None
     for attempt in range(retries + 1):
         try:
@@ -531,26 +531,21 @@ def fetch_ilmkidunya(limit=MAX_PER_SOURCE):
         "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-karachi",
         "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-lahore",
         "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-islamabad",
-        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-rawalpindi",
-        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-faisalabad",
         "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-peshawar",
-        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-multan",
-        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-quetta",
-        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-gujranwala",
-        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-hyderabad",
-        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-sialkot",
-        "https://www.ilmkidunya.com/jobs/category/govt-jobs",
     ]
+    misses = 0
     for url in listing_urls:
-        if len(out) >= limit:
+        if len(out) >= limit or misses >= 2:
             break
         try:
             src = _get(url).decode("utf-8", "ignore")
+            misses = 0
         except Exception as e:  # noqa: BLE001
+            misses += 1
             print(f"    ilmkidunya {url.rsplit('/', 1)[-1]}: {type(e).__name__}", flush=True)
             continue
         slugs = re.findall(r'href="(/jobs/[a-z0-9][a-z0-9-]*-\d{5,7})"', src)
-        slugs = list(dict.fromkeys(slugs))[:26]
+        slugs = list(dict.fromkeys(slugs))[:18]
         for slug in slugs:
             if slug in seen or len(out) >= limit:
                 continue
@@ -562,7 +557,7 @@ def fetch_ilmkidunya(limit=MAX_PER_SOURCE):
             job = _parse_ilmkidunya(slug, detail)
             if job:
                 out.append(job)
-            time.sleep(0.3)
+            time.sleep(0.45)
     return out
 
 
