@@ -1315,7 +1315,11 @@ def build_page(job, related):
             '<h2>Job poster</h2>'
             f'<a class="dl-btn" href="../posters/{esc(rel_poster)}" download>Download poster</a>'
             '</div>'
-            f'<img src="../posters/{esc(rel_poster)}" alt="{esc(job["title"])} — job poster" loading="lazy">'
+            f'<picture>'
+            f'<source srcset="../posters/{esc(rel_poster.rsplit(".", 1)[0])}.webp" type="image/webp">'
+            f'<img src="../posters/{esc(rel_poster)}" alt="{esc(job["title"])} — job poster" '
+            f'width="1080" height="1350" loading="lazy" decoding="async">'
+            f'</picture>'
             '<p class="poster-note">Share this poster on WhatsApp, Facebook or print it — '
             'it carries the full eligibility and the apply link.</p>'
             '</section>'
@@ -2085,6 +2089,240 @@ def build_keyword_pages(jobs, made_before):
     return made
 
 
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Commission / recruiter pages — "fpsc jobs", "ppsc jobs", "nts jobs",
+#  "police jobs". These bodies publish few vacancies at a time, so the page
+#  must still be worth reading on a quiet week: how the body recruits, how the
+#  written test works, what to prepare. Live vacancies are merged in when they
+#  exist, never invented.
+# ══════════════════════════════════════════════════════════════════════════
+COMMISSION_PAGES = [
+    {
+        "slug": "fpsc-jobs",
+        "title": "FPSC Jobs 2026 — Federal Public Service Commission Vacancies",
+        "h1": "FPSC Jobs",
+        "desc": "Federal Public Service Commission vacancies in Pakistan: how the FPSC recruits, "
+                "which posts it advertises, how the written test and viva work, and every live "
+                "federal post we track.",
+        "match": ("fpsc", "federal public service commission"),
+        "official": "https://www.fpsc.gov.pk",
+        "official_name": "fpsc.gov.pk",
+        "body": [
+            ("What the FPSC does",
+             "The Federal Public Service Commission is the constitutional body that hires for federal "
+             "ministries and departments — BPS-16 and above in most cases. It does not run one big "
+             "annual exam like the CSS; instead it advertises individual posts through consolidated "
+             "advertisements published on its own website and in national newspapers, usually on a "
+             "monthly cycle."),
+            ("Which posts appear",
+             "Recent FPSC advertisements have covered assistant directors, inspectors, "
+             "superintendents, assistant private secretaries, librarians, staff nurses, assistant "
+             "managers and technical posts in ministries such as Finance, Interior, Commerce, "
+             "National Health Services and the Federal Board of Revenue. Posts below BPS-16 in the "
+             "federal government are usually filled by the departments themselves, not the FPSC."),
+            ("How the selection works",
+             "Applications are submitted online through the FPSC portal, followed by a fee challan "
+             "paid at a bank. Shortlisted candidates sit a written test — a screening test with "
+             "objective papers relevant to the post — and those who pass go to an interview or viva "
+             "before the commission. Final merit is calculated from the written test, the viva and, "
+             "for some posts, experience and qualifications."),
+            ("What to prepare",
+             "Read the advertisement carefully for the exact syllabus: most FPSC screening tests mix "
+             "English, general knowledge, Pakistan affairs, basic mathematics and professional "
+             "questions for the specific post. Eligibility is checked strictly — age limit, degree "
+             "and required experience must match on the closing date, not after it."),
+        ],
+        "faq": [
+            ("How often does the FPSC advertise jobs?",
+             "Consolidated advertisements usually appear every month, with individual posts added "
+             "during the month. Check the official FPSC website for the current advertisement and "
+             "the closing date; this page lists the federal vacancies our sources publish."),
+            ("Is there an age relaxation in FPSC jobs?",
+             "The advertisement states the age limit and any relaxation that applies — general age "
+             "relaxation for certain categories is granted by the Establishment Division and is "
+             "normally mentioned on the advert itself."),
+            ("Can I apply for more than one FPSC post?",
+             "Yes, but each post needs a separate application and a separate fee. Applying for one "
+             "post does not cover another."),
+        ],
+    },
+    {
+        "slug": "ppsc-jobs",
+        "title": "PPSC Jobs 2026 — Punjab Public Service Commission Vacancies",
+        "h1": "PPSC Jobs",
+        "desc": "Punjab Public Service Commission vacancies: how the PPSC recruits for Punjab "
+                "departments, what the written test covers, and every live Punjab post we track.",
+        "match": ("ppsc", "punjab public service commission"),
+        "official": "https://ppsc.gop.pk",
+        "official_name": "ppsc.gop.pk",
+        "body": [
+            ("What the PPSC does",
+             "The Punjab Public Service Commission hires for the provincial government of Punjab — "
+             "lecturers, assistant directors, tehsildars, inspectors, medical officers and other "
+             "provincial posts. It publishes consolidated advertisements for the whole province, "
+             "usually several times a year."),
+            ("The written test",
+             "Most PPSC recruitment now runs through a written examination held at centres across "
+             "Punjab, followed by an interview. The written paper is subject-specific for teaching "
+             "and technical posts and general for administrative posts, and the syllabus is published "
+             "with the advertisement."),
+            ("Applying",
+             "Applications go through the PPSC online portal. Upload the required documents, pay the "
+             "fee challan for your category, and keep the roll number slip — it is needed for the "
+             "test centre and the interview."),
+        ],
+        "faq": [
+            ("How many times a year does the PPSC advertise?",
+             "Advertisements are published throughout the year, with larger consolidated "
+             "advertisements a few times a year for lecturer and administrative posts."),
+            ("What is the PPSC fee?",
+             "The fee depends on the post and the candidate category and is stated on the "
+             "advertisement. It is paid through a bank challan or the online payment option in the "
+             "portal — never to an individual."),
+        ],
+    },
+    {
+        "slug": "nts-jobs",
+        "title": "NTS Jobs 2026 — National Testing Service Vacancies and Test Dates",
+        "h1": "NTS Jobs",
+        "desc": "Jobs advertised through the National Testing Service in Pakistan, plus how NTS "
+                "tests work, how to apply and what to carry on the test day.",
+        "match": ("nts", "national testing service"),
+        "official": "https://www.nts.org.pk",
+        "official_name": "nts.org.pk",
+        "body": [
+            ("What the NTS does",
+             "The National Testing Service conducts recruitment tests on behalf of employers — "
+             "government departments, schools, colleges, hospitals and some private organisations. "
+             "The employer advertises the post and sets the criteria; the NTS runs the test and "
+             "publishes the result."),
+            ("Applying through the NTS",
+             "Each advertisement includes an NTS application form and a fee. Fill the form, deposit "
+             "the fee in the nominated bank account, and post or submit the form before the deadline. "
+             "The roll number slip is issued on the NTS website a few days before the test — print "
+             "it, because you cannot sit the paper without it."),
+            ("On the test day",
+             "Bring the printed roll number slip, your original CNIC and the same photographs used on "
+             "the form. Reach the centre early: entry closes before the paper starts."),
+        ],
+        "faq": [
+            ("Are NTS jobs government jobs?",
+             "Not always. The NTS is a testing body, not an employer — the job is with whichever "
+             "department or organisation placed the advertisement. Check the employer named on the "
+             "advert."),
+            ("How do I find my NTS roll number slip?",
+             "On the NTS website, enter your CNIC number in the roll number slip section. Slips are "
+             "normally published a few days before the test date."),
+        ],
+    },
+    {
+        "slug": "police-jobs",
+        "title": "Police Jobs in Pakistan 2026 — Constable, SI and FIA Vacancies",
+        "h1": "Police Jobs",
+        "desc": "Police and law-enforcement vacancies across Pakistan: constable, sub-inspector, "
+                "FIA, Frontier Corps and traffic police posts, with eligibility and physical standards.",
+        "match": ("police", "constable", "sub inspector", "fia", "rangers", "levies"),
+        "official": "https://www.nip.gov.pk",
+        "official_name": "National Police Portal",
+        "body": [
+            ("Who recruits police in Pakistan",
+             "Each province runs its own police force — Punjab, Sindh, Khyber Pakhtunkhwa, "
+             "Balochistan and Islamabad capital territory — and each advertises through its own "
+             "board. Federal agencies such as the FIA, the Anti-Narcotics Force and the Rangers "
+             "recruit separately under the Ministry of Interior."),
+            ("Eligibility for a constable post",
+             "Most constable advertisements ask for matric or intermediate, an age limit of roughly "
+             "18 to 25 with the relaxation printed on the advert, minimum height and chest "
+             "measurements, and physical tests: running, push-ups, sit-ups and a Chin-up where "
+             "applied. Sub-inspector posts usually require a bachelor's degree."),
+            ("The selection process",
+             "Written test or MCQ screening, then physical measurement and endurance tests, then a "
+             "medical examination and an interview. Candidates who clear each stage are called "
+             "forward in small batches — check the force's own website for the schedule."),
+        ],
+        "faq": [
+            ("What height is required for police constable?",
+             "It differs by province and is printed on each advertisement. Typical minimums are "
+             "around 5 feet 5 inches with a chest measurement specified separately. Relaxation, "
+             "where it applies, is stated in the same advert."),
+            ("Do women apply for police jobs in Pakistan?",
+             "Yes — all provincial forces recruit women constables and officers, and advertisements "
+             "reserve a quota for them. Physical standards for women are specified separately on the "
+             "advert."),
+        ],
+    },
+]
+
+
+def build_commission_pages(jobs, base):
+    """Editorial pages for the big recruiting bodies: unique body copy plus
+    whatever live vacancies match. Built at root level so the URL is short."""
+    made = []
+    others = "".join(
+        f'<a class="chip" href="{c["slug"]}.html">{esc(c["h1"])}</a>'
+        for c in COMMISSION_PAGES)
+    for c in COMMISSION_PAGES:
+        keys = c["match"]
+        subset = [j for j in jobs
+                  if any(k in ((j.get("title") or "") + " " + (j.get("company") or "")).lower()
+                         for k in keys)]
+        rows = sorted(subset, key=lambda x: (x.get("last_date") or "9999"))[:40]
+        f = landing_facts(subset) if subset else None
+
+        body = "".join(f"<h2>{esc(h)}</h2><p>{esc(t)}</p>" for h, t in c["body"])
+        faq = c["faq"] + ([(
+            f"How many {c['h1']} vacancies are live right now?",
+            f"{f['total']} right now. This page is rebuilt every hour, so the list below is current."
+        )] if f else [])
+        ld = _ld({"@context": "https://schema.org", "@type": "FAQPage", "inLanguage": "en-PK",
+                  "mainEntity": [{"@type": "Question", "name": q,
+                                  "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq]})
+        faq_block = ('<section class="faq-block" style="margin-top:26px"><h2>Common questions</h2>' +
+                     "".join(f"<details><summary>{esc(q)}</summary><p>{esc(a)}</p></details>"
+                             for q, a in faq) + "</section>")
+
+        if rows:
+            jobs_block = ('<h2 style="font-size:17px;margin:0 0 12px">Live vacancies right now</h2>'
+                          '<div class="job-list">' + "".join(keyword_card(j) for j in rows) + "</div>")
+            intro = (f'<p class="lead"><strong>{len(subset)} live vacancies</strong> matching this '
+                     f'body are on RozgarJobs right now. The guide below explains how the process '
+                     f'works; the list shows what is open today.</p>')
+        else:
+            jobs_block = ('<div class="notice-box" style="margin:18px 0"><strong>No live vacancies '
+                          'from this body right now.</strong> Advertisements appear in cycles — '
+                          'the guide below stays accurate between them, and the '
+                          '<a href="sarkari-naukri.html">government jobs list</a> shows every '
+                          'federal and provincial post we are tracking today.</div>')
+            intro = ('<p class="lead">No advertisements from this body are open at the moment. '
+                     'Everything below explains how it recruits, so you know exactly what to '
+                     'prepare before the next advertisement appears.</p>')
+
+        html_out = KEYWORD_PAGE.format(
+            title=esc(c["title"]), desc=esc(c["desc"]), canonical=esc(f"{base}/{c['slug']}.html"),
+            base=esc(base), json_ld=ld, crumb=esc(c["h1"]), h1=esc(c["h1"]),
+            count=(f["total"] if f else 0),
+            intro=intro + body, intro_rest="",
+            stat_row=(f"<span><strong>{f['total']}</strong> live</span>"
+                      f"<span><strong>{f['gov']}</strong> government</span>" if f else
+                      f'<span><strong>Official site</strong> <a href="{c["official"]}" target="_blank" '
+                      f'rel="noopener nofollow">{esc(c["official_name"])}</a></span>'),
+            cards="", more_block=jobs_block,
+            employer_block="", faq_block=faq_block,
+            related_links=others + '<a class="chip" href="index.html">All jobs</a>',
+            year=datetime.now().year,
+        )
+        # KEYWORD_PAGE already places {more_block} after the cards, and we passed
+        # the live list there — but the intro body must sit under the listings.
+        html_out = html_out.replace("{intro_rest}", "")
+        with open(os.path.join(ROOT, f"{c['slug']}.html"), "w", encoding="utf-8") as fh:
+            fh.write(html_out)
+        made.append(f"{c['slug']}.html")
+
+    print(f"     {'':12s} {len(made):4d} commission pages")
+    return made
+
+
 def write_locations_page():
     """A hub that links every city and category page that actually exists.
     Google follows links, not sitemaps — this is the internal-link backbone."""
@@ -2392,7 +2630,7 @@ def main():
     pk_rows = []
     if POSTERS:
         try:
-            pk_rows = pk_sources.collect(limit_per_source=int(os.environ.get("PK_LIMIT", "90")))
+            pk_rows = pk_sources.collect(limit_per_source=int(os.environ.get("PK_LIMIT", "320")))
             pk_rows = [j for j in pk_rows if j.get("title") and j.get("company") and j.get("url")]
             print(f"OK   {'Pakistan':12s} {len(pk_rows):4d} jobs")
         except Exception as e:  # noqa: BLE001
@@ -2472,6 +2710,21 @@ def main():
     # Only jobs a candidate in Pakistan can act on are published: local jobs
     # and remote roles open to Pakistan. Everything else is dropped before a
     # page, a poster or a sitemap entry is created.
+    # Pakistani boards mix results, admit cards and date sheets into their job
+    # feeds. Those are not vacancies: they have no employer, no salary and no
+    # apply link, and publishing them would make the site look like a results
+    # portal to both readers and Google.
+    NOT_A_JOB = ("result", "admit card", "roll number slip", "date sheet",
+                 "date sheet", "answer key", "past paper", "guess paper",
+                 "merit list", "interview schedule", "test schedule",
+                 "fee challan", "advertisement no", "announcement")
+    before = len(jobs)
+    jobs = [j for j in jobs
+            if not any(k in (j.get("title") or "").lower() for k in NOT_A_JOB)]
+    noise = before - len(jobs)
+    if noise:
+        print(f"     {'':12s} {noise:4d} result/notice posts skipped")
+
     before = len(jobs)
     jobs = [j for j in jobs if j.get("is_pk") or j.get("pak_friendly")]
     dropped = before - len(jobs)
@@ -2548,6 +2801,7 @@ def main():
 
     landing_urls = build_landing_pages(jobs)
     kw_urls = build_keyword_pages(jobs, landing_urls)
+    kw_urls += build_commission_pages(jobs, SITE_URL or "")
     landing_urls = landing_urls + kw_urls
     write_feed(jobs)
     n_loc = write_locations_page()

@@ -1,0 +1,93 @@
+name: WhatsApp post pack
+
+# Builds ready-to-paste WhatsApp channel posts — no API key needed to start.
+# Add CALLMEBOT_PHONE + CALLMEBOT_APIKEY as repo secrets and the first post of
+# each run is also delivered to that number (free service, see scripts/
+# whatsapp_queue.py for the link).
+
+on:
+  schedule:
+    - cron: "20 */3 * * *"   # every 3 hours, Islamabad is UTC+5
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: whatsapp
+  cancel-in-progress: false
+
+jobs:
+  queue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the queue
+        id: build
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          python3 scripts/whatsapp_queue.py | tee /tmp/queue.log
+          SENT=$(python3 -c "import json;print(json.dumps([q['slug'] for q in json.load(open('data/whatsapp-queue.json'))]))")
+          echo "slugs=$SENT" >> "$GITHUB_OUTPUT"
+
+      - name: Deliver to the admin number (optional)
+        if: vars.CALLMEBOT_ENABLED == 'true'
+        env:
+          PHONE: ${{ secrets.CALLMEBOT_PHONE }}
+          KEY: ${{ secrets.CALLMEBOT_APIKEY }}
+        run: |
+          if [ -z "$PHONE" ] || [ -z "$KEY" ]; then
+            echo "CallMeBot not configured — skipping, the queue file is committed instead."
+            exit 0
+          fi
+          python3 - <<'EOF'
+          import json, os, urllib.parse, urllib.request
+          q = json.load(open("data/whatsapp-queue.json"))
+          if not q:
+              raise SystemExit("empty queue")
+          text = q[0]["text"]
+          url = ("https://api.callmebot.com/whatsapp.php?phone=" + os.environ["PHONE"] +
+                 "&apikey=" + os.environ["KEY"] + "&text=" + urllib.parse.quote(text))
+          with urllib.request.urlopen(url, timeout=20) as r:
+              print("delivered:", r.status)
+          EOF
+
+      - name: Remember what was queued
+        if: always()
+        run: |
+          python3 - <<'EOF'
+          import json, os
+          slugs = json.loads(os.environ.get("SLUGS", "[]"))
+          path = "data/whatsapp-posted.json"
+          try:
+              posted = set(json.load(open(path)))
+          except Exception:
+              posted = set()
+          posted.update(slugs)
+          json.dump(sorted(posted), open(path, "w"), indent=1)
+          open(path, "a").write("\n")
+          print("remembered", len(posted), "posts")
+          EOF
+        env:
+          SLUGS: ${{ steps.build.outputs.slugs }}
+
+      - name: Commit
+        run: |
+          git config user.name "Rozgar Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/whatsapp-queue.json data/whatsapp-posted.json
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -m "chore: WhatsApp post pack [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi

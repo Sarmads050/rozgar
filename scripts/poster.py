@@ -319,6 +319,15 @@ def fact_grid(d, img, x, y, w, rows, fg, label, line, row_h=92):
 # ══════════════════════════════════════════════════════════════════════════
 #  PORTRAIT POSTER — 1080 × 1350
 # ══════════════════════════════════════════════════════════════════════════
+def _save_webp(img, out_path):
+    """A WebP twin next to every JPEG: 60-70% smaller, same picture.
+    Old browsers keep the JPEG, everyone else downloads the small file."""
+    try:
+        img.save(out_path.rsplit(".", 1)[0] + ".webp", "WEBP", quality=82, method=6)
+    except Exception:  # noqa: BLE001 — WebP is an optimisation, never a failure
+        pass
+
+
 def render_poster(job, out_path, site_url="", source_line=""):
     W, H = 1080, 1350
     M = 64
@@ -510,6 +519,7 @@ def render_poster(job, out_path, site_url="", source_line=""):
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     img.save(out_path, "JPEG", quality=88, optimize=True, progressive=True)
+    _save_webp(img, out_path)
     return out_path
 
 
@@ -591,4 +601,5 @@ def render_og(job, out_path, site_url=""):
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     img.save(out_path, "JPEG", quality=86, optimize=True, progressive=True)
+    _save_webp(img, out_path)
     return out_path

@@ -866,3 +866,43 @@ ul, ol, dl, dd { margin: 0; padding: 0; }
 /* long labels inside chip rows must never push the page sideways */
 .tag-list, .chips, .cats { max-width: 100%; }
 .tag-list .chip, .cats a, .cats .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── <picture> wrappers must not break the card layout ─────────── */
+.poster-thumb picture { display: block; width: 100%; height: 100%; }
+.poster-box picture { display: block; }
+.poster-thumb img, .poster-box img { display: block; }
+
+/* ── accessibility pass (WCAG 2.2 AA) ─────────────────────────────
+   1. Gold on white was 2.4:1 — the brand accent stays gold, but text
+      uses a darker shade that passes 5:1. The gold block fill is unchanged.
+   2. A visible skip link for keyboard and screen-reader users.
+   3. Every focusable element gets a clear 3px focus ring. */
+.hero h1 span,
+.brand-text .bj { color: var(--gold-ink, #8a6b0f); }
+[data-theme="dark"] .hero h1 span,
+[data-theme="dark"] .brand-text .bj { color: #e0b73a; }
+.gold-note { color: var(--gold-ink, #8a6b0f); }
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 200;
+  background: var(--brand); color: #fff; padding: 10px 16px;
+  border-radius: 0 0 10px 0; font-size: 14px; font-weight: 650;
+}
+.skip-link:focus { left: 0; outline: 3px solid var(--gold); outline-offset: 2px; }
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus, #1d4f7c);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+[data-theme="dark"] :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: #79b8f3;
+}
+
+@media (prefers-contrast: more) {
+  :root { --line: #767676; --muted: #4a5560; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .poster-thumb img { transition: none !important; }
+  .job-card.poster-card:hover .poster-thumb img { transform: none !important; }
+}

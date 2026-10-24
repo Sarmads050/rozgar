@@ -4,7 +4,7 @@
 
 Site: https://sarmads050.github.io/rozgar/
 Language: English (en-PK)
-Jobs live now: 138
+Jobs live now: 120
 
 ## Main pages
 - [All jobs](https://sarmads050.github.io/rozgar/): search and filter every live vacancy
@@ -36,7 +36,6 @@ Jobs live now: 138
 - [Marketing](https://sarmads050.github.io/rozgar/category/marketing.html)
 - [Sales](https://sarmads050.github.io/rozgar/category/sales.html)
 - [Customer Support](https://sarmads050.github.io/rozgar/category/customer-support.html)
-- [Product](https://sarmads050.github.io/rozgar/category/product.html)
 - [Operations](https://sarmads050.github.io/rozgar/category/operations.html)
 
 ## Notes

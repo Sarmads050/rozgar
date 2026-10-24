@@ -29,7 +29,7 @@ from datetime import date
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/122.0 Safari/537.36")
 TIMEOUT = 30
-MAX_PER_SOURCE = 90
+MAX_PER_SOURCE = 320
 
 SOURCES_ENABLED = {"njp": True, "jobsalert": True, "ilmkidunya": True}
 
@@ -383,9 +383,9 @@ def _parse_njp(jid, src):
 # ═══════════════════════════════════════════════════════════════════════════
 #  2. JobsAlert.pk — WordPress REST API
 # ═══════════════════════════════════════════════════════════════════════════
-def fetch_jobsalert(limit=MAX_PER_SOURCE, pages=5):
+def fetch_jobsalert(limit=MAX_PER_SOURCE, pages=4):
     out = []
-    per = 20
+    per = 100
     for page in range(1, pages + 1):
         if len(out) >= limit:
             break
@@ -534,6 +534,12 @@ def fetch_ilmkidunya(limit=MAX_PER_SOURCE):
         "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-rawalpindi",
         "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-faisalabad",
         "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-peshawar",
+        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-multan",
+        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-quetta",
+        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-gujranwala",
+        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-hyderabad",
+        "https://www.ilmkidunya.com/jobs/city-wise/jobs-in-sialkot",
+        "https://www.ilmkidunya.com/jobs/category/govt-jobs",
     ]
     for url in listing_urls:
         if len(out) >= limit:
@@ -544,7 +550,7 @@ def fetch_ilmkidunya(limit=MAX_PER_SOURCE):
             print(f"    ilmkidunya {url.rsplit('/', 1)[-1]}: {type(e).__name__}", flush=True)
             continue
         slugs = re.findall(r'href="(/jobs/[a-z0-9][a-z0-9-]*-\d{5,7})"', src)
-        slugs = list(dict.fromkeys(slugs))[:22]
+        slugs = list(dict.fromkeys(slugs))[:26]
         for slug in slugs:
             if slug in seen or len(out) >= limit:
                 continue

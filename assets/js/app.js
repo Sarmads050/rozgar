@@ -174,7 +174,11 @@ function cardHTML(j) {
     return `
     <article class="job-card poster-card ${j.is_manual ? "is-manual" : ""}">
       <a class="poster-thumb" href="jobs/${esc(j.slug)}.html">
-        <img src="${esc(j.poster)}" alt="${esc(j.display_title || j.title)} poster" loading="lazy">
+        <picture>
+          <source srcset="${esc(j.poster.replace(/\.jpg$/, ".webp"))}" type="image/webp">
+          <img src="${esc(j.poster)}" alt="${esc(j.display_title || j.title)} — job poster"
+               width="1080" height="1350" loading="lazy" decoding="async">
+        </picture>
         ${j.last_date ? `<span class="poster-date">Last date ${esc(prettyDate(j.last_date))}</span>` : ""}
       </a>
       <div class="job-info">

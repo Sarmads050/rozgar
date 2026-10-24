@@ -1,0 +1,49 @@
+name: Ping Google Indexing API
+
+# New JobPosting pages go straight into the crawl queue instead of waiting for
+# the next natural crawl. Runs 25 minutes after each hourly deploy.
+on:
+  schedule:
+    - cron: "25 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: indexing
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install the Google auth client
+        run: python3 -m pip install --quiet google-auth
+
+      - name: Submit new URLs
+        env:
+          GOOGLE_INDEXING_KEY: ${{ secrets.GOOGLE_INDEXING_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: python3 scripts/index_jobs.py
+
+      - name: Remember submitted slugs
+        run: |
+          git config user.name "Rozgar Bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/indexed-slugs.json 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "nothing new"
+          else
+            git commit -m "chore: indexing state [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi
