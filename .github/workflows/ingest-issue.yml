@@ -84,18 +84,19 @@ jobs:
         id: body
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           python3 - <<'EOF'
           import json, os, urllib.request
-          url = f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/issues/{os.environ['ISSUE_NUMBER']}"
-          req = urllib.request.Request(url, headers={"Authorization": f"Bearer {os.environ['GH_TOKEN']}",
-                                                     "Accept": "application/vnd.github+json"})
+          url = ("https://api.github.com/repos/" + os.environ["GITHUB_REPOSITORY"] +
+                 "/issues/" + os.environ["ISSUE_NUMBER"])
+          req = urllib.request.Request(url, headers={
+              "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+              "Accept": "application/vnd.github+json"})
           body = json.load(urllib.request.urlopen(req))["body"] or ""
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write("body<<BODY_EOF\n" + body + "\nBODY_EOF\n")
           EOF
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
 
       - name: Parse and validate
         id: parse
