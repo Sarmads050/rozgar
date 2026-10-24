@@ -411,6 +411,101 @@ def enforce_english(job):
     return job
 
 
+
+# ── data quality: employer names, display titles ──────────────────────────
+GENERIC_EMPLOYERS = {"government company", "private company", "not specified", "company",
+                     "employer", "n/a", "na", "-", "unknown", "government", "private"}
+
+_DEPT_WORDS = ("department", "authority", "commission", "ministry", "university", "college",
+               "hospital", "board", "council", "office", "directorate", "institute",
+               "army", "navy", "air force", "police", "court", "bank", "psc")
+
+
+def clean_employer(job):
+    """Replace placeholder employer names with something a reader can trust."""
+    name = (job.get("company") or "").strip()
+    low = name.lower().strip(" .")
+
+    if low not in GENERIC_EMPLOYERS:
+        return name
+
+    title = (job.get("title") or "").lower()
+    if any(w in title for w in _DEPT_WORDS) or (job.get("sector") == "government"):
+        return "Government of Pakistan"
+    return "Private sector employer"
+
+
+def display_title(job, limit=72):
+    """Aggregator titles are keyword stuffed ('DSF Jobs 2026 Join Pak Army ...').
+    Cards get a short, readable version. The full title stays in the data and in
+    the JobPosting schema, which is what Google expects for a job page."""
+    raw = re.sub(r"\s+", " ", (job.get("title") or "")).strip()
+    t = raw
+
+    # 1. cut the marketing tail
+    t = re.sub(r"\s*[|–-]\s*(apply online|online apply|last date.*|apply by.*|apply now)$", "",
+               t, flags=re.I).strip(" -–|,")
+    t = re.sub(r"\s*[|–-]\s*(apply online|last date|apply by).*$", "", t, flags=re.I).strip(" -–|,")
+    t = re.sub(r"\s+(online apply|apply online)(\s+last date)?\s*$", "", t, flags=re.I)
+    t = re.sub(r"\s+last date(\s+to apply)?\s*$", "", t, flags=re.I).strip(" -–|,")
+
+    # 2. years in the middle add nothing on a card
+    t = re.sub(r"\b(19|20)\d{2}\b", "", t)
+    t = re.sub(r"\s{2,}", " ", t).strip(" -–|,")
+
+    # 2b. Pakistani aggregator boilerplate that is not part of any job title
+    BOILER = (r"application form( download| online)?|download application|"
+              r"test (and|&) interview date|interview date|roll ?no slip|"
+              r"advertisement|how to apply|eligibility criteria|complete details|"
+              r"full details|official website|www\.[a-z0-9.\-/]+")
+    t = re.sub(rf"\s*(?:[-–|,]\s*)?(?:{BOILER})\b.*$", "", t, flags=re.I).strip(" -–|,")
+    t = re.sub(r"\b(download|downloa|onlin|apply onlin)$", "", t, flags=re.I).strip(" -–|,")
+    t = re.sub(r"^.*?\bPO ?Box\s*\d+\s*(GPO|P\.O\.)?\s*[A-Za-z ]*?\b(?=[A-Z])", "", t).strip(" -–|,")
+
+    # 2c. standalone filler words at either end
+    for _ in range(3):
+        t = re.sub(r"^(?:latest|new|apply in|apply for|apply at|jobs in|job in|"
+                   r"vacancy in|vacancies in|today|join)\s+", "", t, flags=re.I)
+        t = re.sub(r"\s+(?:latest|new|apply|jobs?|vacanc(?:y|ies)|today|update|"
+                   r"updated|details|posts?)$", "", t, flags=re.I)
+        t = re.sub(r"\s*[-–|,]\s*$", "", t).strip()
+
+    # 3. 'Jobs' as filler ('X Jobs 2026 Join ...' → 'X Join ...')
+    if len(t) > 34:
+        t = re.sub(r"\bjobs?\b\s*", "", t, count=1, flags=re.I)
+        t = re.sub(r"\b(vacancies|careers)\b\s*", "", t, count=1, flags=re.I)
+    t = re.sub(r"\s{2,}", " ", t).strip(" -–|,")
+
+    # 4. tidy separators left behind
+    t = re.sub(r"\s*[-–|]\s*$", "", t)
+    t = re.sub(r"^\s*[-–|]\s*", "", t)
+
+    if not t or len(t) < 4 or len(t.split()) < 2:
+        emp = (job.get("company") or "").strip()
+        generic = ("private company", "government company", "not specified", "")
+        t = f"Latest posts — {emp}" if emp.lower() not in generic else raw
+
+    if len(t) > limit:
+        cut = t[:limit].rsplit(" ", 1)[0]
+        t = cut.rstrip(" ,-–|") + "…"
+
+    # A cleaned aggregator title often reads like a notice, not a role
+    # ("District and Session Court Peshawar"). Say what it is instead.
+    ROLE = (r"manager|engineer|officer|clerk|teacher|nurse|driver|assistant|"
+            r"technician|operator|accountant|director|superintendent|inspector|"
+            r"constable|attendant|guard|developer|designer|analyst|specialist|"
+            r"intern|trainee|professor|lecturer|doctor|pharmacist|lawyer|judge|"
+            r"secretary|coordinator|executive|head|lead|chief|helper|sweeper|"
+            r"naib|qasid|chowkidar|malhi|baildar|imam|khateeb|moazzin|store|"
+            r"dispatch|receptionist|warden|supervisor|instructor|trainer|"
+            r"consultant|advisor|auditor|surveyor|subedar|havildar|soldier|"
+            r"staff|engineer|draftsman|photographer|security")
+    if (not t.startswith("Latest posts — ")
+            and not re.search(rf"\b(?:{ROLE})\b", t, re.I) and len(t.split()) >= 3):
+        t = "Latest posts — " + t
+    return t or raw
+
+
 def finish(job):
     """Shared post-processing."""
     for key in ("title", "company", "location"):
@@ -428,6 +523,8 @@ def finish(job):
     job["tags"] = [t for t in dict.fromkeys(job.get("tags", [])) if t][:8]
     job["pak_friendly"] = pakistan_friendly(job)
     enforce_english(job)
+    job["company"] = clean_employer(job)
+    job["display_title"] = display_title(job)
     job["slug"] = f"{safe_slug(job['title'])}-{safe_slug(job['company'])[:24]}-{job['id'][:6]}"
     return job
 
@@ -806,6 +903,7 @@ PAGE = """<!DOCTYPE html>
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="stylesheet" href="../assets/css/style.css">
 {jsonld}
+<script src="assets/js/analytics.js" defer></script>
 </head>
 <body class="job-page">
 <header class="site-head">
@@ -1345,6 +1443,7 @@ LANDING_PAGE = """<!DOCTYPE html>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f2a47'/%3E%3Cpath d='M20 17h9v13l11-13h10L37 32l14 15H40L29 34v13h-9z' fill='white'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="../assets/css/style.css">
 {json_ld}
+<script src="../assets/js/analytics.js" defer></script>
 </head>
 <body>
 <header class="site-head">
@@ -1376,6 +1475,8 @@ LANDING_PAGE = """<!DOCTYPE html>
   </div>
 
   {more_block}
+
+  {intro_rest}
 
   {employer_block}
 
@@ -1433,7 +1534,7 @@ def landing_card(j):
             f'style="grid-template-columns:64px minmax(0,1fr) auto;text-decoration:none">'
             f'<div class="logo" style="width:56px;height:56px;font-size:14px">'
             f'{esc((j["company"] or "?")[:2].upper())}</div>'
-            f'<div class="job-info"><h3 class="job-title" style="margin:0 0 3px">{esc(j["title"])}</h3>'
+            f'<div class="job-info"><h3 class="job-title" style="margin:0 0 3px">{esc(j.get("display_title") or j["title"])}</h3>'
             f'<p class="job-company" style="margin:0 0 7px"><b>{esc(j["company"])}</b>'
             f'{" · " + esc(j["location"]) if j.get("location") else ""}</p>'
             f'<div class="chips">'
@@ -1542,6 +1643,15 @@ def build_intro(kind, name, f):
     return "".join(x for x in (p1, p2, p3, p4) if x)
 
 
+def split_intro(html):
+    """Lead paragraph stays above the list; the rest moves below it so a phone
+    user sees real vacancies within one screen."""
+    marker = html.find("</p>")
+    if marker < 0:
+        return html, ""
+    return html[:marker + 4], html[marker + 4:]
+
+
 def build_faqs(kind, name, f):
     """Five answered questions built from this page's data (FAQPage schema)."""
     qa = []
@@ -1645,7 +1755,8 @@ def build_landing_pages(jobs):
             title=esc(title), desc=esc(desc), canonical=esc(canonical),
             json_ld=json_ld, crumb=esc(crumb), h1=esc(h1),
             count=f["total"],
-            intro=build_intro(kind, name, f),
+            intro=split_intro(build_intro(kind, name, f))[0],
+            intro_rest=split_intro(build_intro(kind, name, f))[1],
             stat_row=stat_row,
             cards="".join(landing_card(j) for j in rows),
             more_block=more,
@@ -1704,6 +1815,276 @@ def build_landing_pages(jobs):
     return made
 
 
+# ══════════════════════════════════════════════════════════════════════════
+#  Keyword landing pages — the phrases people actually type in Pakistan
+#  ("fpsc jobs", "ppsc jobs", "sarkari naukri", "pak army jobs").
+#  Same rules as city pages: 5+ real jobs, unique data, FAQPage schema.
+# ══════════════════════════════════════════════════════════════════════════
+PROVINCES = {
+    "Punjab": ("Lahore", "Rawalpindi", "Faisalabad", "Multan", "Gujranwala", "Sialkot",
+               "Bahawalpur", "Sargodha", "Sheikhupura", "Kasur", "Okara", "Sahiwal",
+               "Rahim Yar Khan", "Dera Ghazi Khan", "Jhelum", "Gujrat", "Nankana Sahib",
+               "Vehari", "Khanewal", "Attock", "Chakwal", "Mianwali", "Bhakkar", "Layyah"),
+    "Sindh": ("Karachi", "Hyderabad", "Sukkur", "Larkana", "Nawabshah", "Mirpur Khas",
+              "Jacobabad", "Shikarpur", "Khairpur", "Thatta", "Badin", "Dadu", "Ghotki"),
+    "Khyber Pakhtunkhwa": ("Peshawar", "Mardan", "Abbottabad", "Swat", "Mingora", "Kohat",
+                           "Bannu", "Dera Ismail Khan", "Charsadda", "Nowshera", "Swabi",
+                           "Mansehra", "Haripur", "Dir", "Chitral", "Malakand"),
+    "Balochistan": ("Quetta", "Gwadar", "Turbat", "Khuzdar", "Sibi", "Loralai", "Zhob",
+                    "Chaman", "Dera Murad Jamali"),
+    "Islamabad": ("Islamabad",),
+}
+
+KEYWORD_PAGES = [
+    ("sarkari-naukri", "Sarkari Naukri — Government Jobs in Pakistan",
+     "Every government job on RozgarJobs in one list: federal, provincial, teaching, health, "
+     "police and defence posts, with the closing date and eligibility on each card.",
+     "Sarkari naukri",
+     lambda j: (j.get("sector") or "").lower() == "government"),
+    ("fpsc-jobs", "FPSC Jobs 2026 — Federal Public Service Commission Vacancies",
+     "Federal government posts advertised through the FPSC, collected in one place with the "
+     "closing date, qualification and pay scale on every listing.",
+     "FPSC jobs",
+     lambda j: any(k in ((j.get("title") or "") + " " + (j.get("company") or "")).lower()
+                   for k in ("fpsc", "federal public service commission"))),
+    ("ppsc-jobs", "PPSC Jobs 2026 — Punjab Public Service Commission Vacancies",
+     "Punjab government posts announced by the PPSC, with the last date, eligibility and "
+     "application link for each one.",
+     "PPSC jobs",
+     lambda j: any(k in ((j.get("title") or "") + " " + (j.get("company") or "")).lower()
+                   for k in ("ppsc", "punjab public service commission"))),
+    ("nts-jobs", "NTS Jobs 2026 — National Testing Service Vacancies",
+     "Posts advertised through the National Testing Service, collected with their closing "
+     "dates and eligibility criteria.",
+     "NTS jobs",
+     lambda j: "nts" in ((j.get("title") or "") + " " + (j.get("company") or "")).lower().split()),
+    ("pak-army-jobs", "Pak Army, PAF and Navy Jobs 2026 — Defence Jobs in Pakistan",
+     "Defence vacancies open to civilians and soldiers, from soldier general duty to civilian "
+     "technical posts, with eligibility and the last date.",
+     "Defence jobs",
+     lambda j: any(k in ((j.get("title") or "") + " " + (j.get("company") or "")).lower()
+                   for k in ("pak army", "pakistan army", "army", "paf", "air force",
+                             "navy", "defence", "defense", "rangers", "soldier"))),
+    ("police-jobs", "Police Jobs in Pakistan 2026 — Constable, SI and FIA Posts",
+     "Police and law-enforcement vacancies across Pakistan, with the physical standard, "
+     "qualification and closing date wherever the advertisement gives them.",
+     "Police jobs",
+     lambda j: any(k in ((j.get("title") or "") + " " + (j.get("company") or "")).lower()
+                   for k in ("police", "constable", "sub inspector", "fia", "rangers", "levies"))),
+    ("teaching-jobs", "Teaching Jobs in Pakistan 2026 — School, College and University",
+     "Teacher, lecturer and educator vacancies across Pakistan, including government school "
+     "posts and private schools, with the closing date on each card.",
+     "Teaching jobs",
+     lambda j: any(k in ((j.get("title") or "") + " " + (j.get("category") or "")).lower()
+                   for k in ("teach", "lecturer", "educator", "instructor", "professor",
+                             "school", "college"))),
+    ("health-jobs", "Health Jobs in Pakistan 2026 — Nurses, Doctors and Technicians",
+     "Government and private hospital vacancies: staff nurse, doctor, lab technician, "
+     "paramedic and allied health posts.",
+     "Health jobs",
+     lambda j: any(k in ((j.get("title") or "") + " " + (j.get("category") or "")).lower()
+                   for k in ("nurse", "doctor", "medical", "hospital", "lab", "pharmac",
+                             "paramedic", "health", "mbbs", "dispenser"))),
+    ("bank-jobs", "Bank Jobs in Pakistan 2026 — NBP, Commercial and Islamic Banks",
+     "Banking vacancies including government-owned banks such as NBP, with the position, "
+     "qualification and closing date.",
+     "Bank jobs",
+     lambda j: any(k in ((j.get("title") or "") + " " + (j.get("company") or "")).lower()
+                   for k in ("bank", "nbp", "hbl", "ubl", "mcb", "askari", "meezan", "banking"))),
+]
+
+PROVINCE_PAGES = [
+    ("punjab-jobs", "Punjab", "Punjab Jobs 2026 — Government and Private Vacancies",
+     "Jobs across Punjab: Lahore, Rawalpindi, Faisalabad, Multan, Gujranwala, Sialkot and "
+     "every other district we cover."),
+    ("sindh-jobs", "Sindh", "Sindh Jobs 2026 — Karachi, Hyderabad and Sukkur Vacancies",
+     "Jobs across Sindh, including Karachi, Hyderabad, Sukkur, Larkana and Mirpur Khas."),
+    ("kpk-jobs", "Khyber Pakhtunkhwa", "KPK Jobs 2026 — Peshawar, Mardan and Abbottabad",
+     "Jobs across Khyber Pakhtunkhwa: Peshawar, Mardan, Abbottabad, Swat, Kohat and more."),
+    ("balochistan-jobs", "Balochistan", "Balochistan Jobs 2026 — Quetta and Gwadar Vacancies",
+     "Jobs across Balochistan, including Quetta, Gwadar, Turbat and Khuzdar."),
+]
+
+KEYWORD_PAGE = """<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39; &#39;unsafe-inline&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src &#39;self&#39; https: data:; font-src &#39;self&#39; data:; connect-src &#39;self&#39; https:; form-action &#39;self&#39; mailto:; base-uri &#39;self&#39;; object-src &#39;none&#39;">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>{title} ({count} Open) | RozgarJobs</title>
+<meta name="description" content="{desc}">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="{canonical}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:image" content="{base}/assets/img/og.png">
+<link rel="icon" type="image/svg+xml" href="assets/img/mark.svg">
+<link rel="apple-touch-icon" href="assets/img/mark.svg">
+<link rel="stylesheet" href="assets/css/style.css">
+{json_ld}
+<style>
+  .landing-intro p {{ font-size:15px; line-height:1.62; color:var(--ink-2); margin:0 0 10px; max-width:76ch; }}
+  .landing-intro p.lead {{ font-size:16px; color:var(--ink); }}
+  .emp-list {{ display:grid; gap:8px; }}
+  .emp-row {{ display:flex; justify-content:space-between; gap:12px; font-size:14px; padding:9px 13px;
+    background:var(--surface); border:1px solid var(--line); border-radius:10px; }}
+  .emp-row b {{ font-weight:650; }} .emp-row span {{ color:var(--muted); font-size:13px; white-space:nowrap; }}
+  .faq-block h2 {{ font-size:17px; margin:0 0 10px; }}
+  .faq-block details {{ background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:12px 15px; margin-bottom:8px; }}
+  .faq-block summary {{ font-weight:650; font-size:14.5px; cursor:pointer; }}
+  .faq-block p {{ color:var(--muted); font-size:14px; margin:8px 0 0; line-height:1.6; }}
+</style>
+<script src="assets/js/analytics.js" defer></script>
+</head>
+<body>
+<header class="site-head">
+  <div class="wrap head-in">
+    <a class="brand" href="index.html">
+      <img class="brand-logo" src="assets/img/mark.svg" alt="" width="38" height="38">
+      <span class="brand-text"><strong>Rozgar<span class="bj">Jobs</span></strong><small>Jobs in Pakistan</small></span>
+    </a>
+    <nav class="head-nav"><a href="index.html">Jobs</a><a href="alerts.html">Alerts</a>
+      <a href="guides/index.html">Guides</a><a href="employers.html">Post a job</a></nav>
+  </div>
+</header>
+
+<div class="topbar">
+  <div class="wrap topbar-in">
+    <span class="topbar-status"><i class="live-dot"></i><span>{count} live vacancies · updated every hour</span></span>
+  </div>
+</div>
+
+<section class="wrap" style="padding-top:24px">
+  <nav class="crumbs"><a href="index.html">Home</a> <span>/</span> <span>{crumb}</span></nav>
+  <h1 style="font-size:clamp(25px,3.4vw,38px);letter-spacing:-1px;margin:10px 0 10px;line-height:1.15">{h1}</h1>
+  <div class="landing-intro">{intro}</div>
+  <div class="stat-strip" style="margin:14px 0 20px">{stat_row}</div>
+
+  <h2 style="font-size:17px;margin:0 0 12px">Open vacancies right now</h2>
+  <div class="job-list">
+  {cards}
+  </div>
+  {more_block}
+  {intro_rest}
+  {employer_block}
+  {faq_block}
+
+  <div class="notice-box" style="margin-top:28px">
+    <strong>About this page</strong>
+    Every listing links to the original advertisement. RozgarJobs never charges candidates —
+    if someone asks you for a fee, <a href="contact.html">report it</a>.
+  </div>
+
+  <section style="margin-top:30px">
+    <h2 style="font-size:16px;margin:0 0 10px">Browse more</h2>
+    <div class="tag-list" style="display:flex;flex-wrap:wrap;gap:7px">{related_links}</div>
+  </section>
+</section>
+
+<footer class="site-foot" style="margin-top:40px">
+  <div class="wrap foot-bottom">
+    <span>© {year} RozgarJobs</span>
+    <span>Jobs in Pakistan, updated hourly</span>
+  </div>
+</footer>
+</body>
+</html>
+"""
+
+
+def keyword_card(j):
+    return (f'<a class="job-card" href="jobs/{esc(j["slug"])}.html" '
+            f'style="grid-template-columns:64px minmax(0,1fr) auto;text-decoration:none">'
+            f'<div class="logo" style="width:56px;height:56px;font-size:14px">'
+            f'{esc((j["company"] or "?")[:2].upper())}</div>'
+            f'<div class="job-info"><h3 class="job-title" style="margin:0 0 3px">'
+            f'{esc(j.get("display_title") or j["title"])}</h3>'
+            f'<p class="job-company" style="margin:0 0 7px"><b>{esc(j["company"])}</b>'
+            f'{" · " + esc(j["location"]) if j.get("location") else ""}</p>'
+            f'<div class="chips">'
+            + (f'<span class="chip chip-date">Last date: {esc(human_date(to_ts(j["last_date"])))}</span>'
+               if j.get("last_date") else "")
+            + (f'<span class="chip">{esc(j["qualification"])}</span>' if j.get("qualification") else "")
+            + f'</div></div>'
+            f'<div class="job-side"><span class="time">{esc(ago_text(j.get("published")))}</span>'
+            f'<span class="apply">Details →</span></div></a>')
+
+
+def build_keyword_pages(jobs, made_before):
+    """Root-level pages for the phrases Pakistanis search for."""
+    base = SITE_URL or ""
+    made = []
+    SHORT = {"sarkari-naukri": "Sarkari naukri", "fpsc-jobs": "FPSC jobs",
+             "ppsc-jobs": "PPSC jobs", "nts-jobs": "NTS jobs",
+             "pak-army-jobs": "Army / PAF / Navy jobs", "police-jobs": "Police jobs",
+             "teaching-jobs": "Teaching jobs", "health-jobs": "Health jobs",
+             "bank-jobs": "Bank jobs"}
+    related = [("index.html", "All jobs")] + [(f"{sl}.html", SHORT.get(sl, h.split("—")[0].strip()))
+                                             for sl, h, _d, _c, _m in KEYWORD_PAGES]
+    related += [(f"{s}.html", f"{p} jobs") for s, p, _t, _d in PROVINCE_PAGES]
+
+    def emit(slug, title, desc, crumb, subset, matcher_name):
+        if len(subset) < 5:
+            return
+        rows = sorted(subset, key=lambda x: (x.get("last_date") or "9999"))[:40]
+        f = landing_facts(subset)
+        qa = build_faqs("keyword", matcher_name, f)
+        ld = _ld({"@context": "https://schema.org", "@type": "FAQPage", "inLanguage": "en-PK",
+                  "mainEntity": [{"@type": "Question", "name": q,
+                                  "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in qa]})
+        faq_block = ('<section class="faq-block" style="margin-top:26px"><h2>Questions about '
+                     + esc(crumb) + "</h2>" +
+                     "".join(f"<details><summary>{esc(q)}</summary><p>{esc(a)}</p></details>" for q, a in qa)
+                     + "</section>")
+        emp_block = ""
+        if f["employers"]:
+            emp_block = ('<section style="margin-top:26px"><h2 style="font-size:17px;margin:0 0 10px">'
+                         'Employers hiring</h2><div class="emp-list">' +
+                         "".join(f'<div class="emp-row"><b>{esc(k)}</b>'
+                                 f'<span>{_plural(v, "open role")}</span></div>'
+                                 for k, v in f["employers"].most_common(6)) + "</div></section>")
+        stat_row = (f"<span><strong>{f['total']:,}</strong> open</span>"
+                    f"<span><strong>{f['gov']:,}</strong> government</span>"
+                    f"<span><strong>{f['priv']:,}</strong> private</span>"
+                    + (f"<span><strong>{len(f['soon'])}</strong> closing this week</span>" if f["soon"] else ""))
+        more = ""
+        if len(subset) > 40:
+            more = (f'<div class="loadmore-wrap"><a class="btn-ghost" href="index.html?q='
+                    f'{urllib.parse.quote(crumb)}">See all {len(subset):,} vacancies →</a></div>')
+
+        html_out = KEYWORD_PAGE.format(
+            title=esc(title), desc=esc(desc), canonical=esc(f"{base}/{slug}.html"),
+            base=esc(base), json_ld=ld, crumb=esc(crumb),
+            h1=esc(title.split("—")[0].strip()),
+            count=f["total"],
+            intro=split_intro(build_intro("keyword", crumb, f))[0],
+            intro_rest=split_intro(build_intro("keyword", crumb, f))[1],
+            stat_row=stat_row,
+            cards="".join(keyword_card(j) for j in rows),
+            more_block=more, employer_block=emp_block, faq_block=faq_block,
+            related_links="".join(f'<a class="chip" href="{u}">{esc(n)}</a>'
+                                  for u, n in related if u != f"{slug}.html")[:6000],
+            year=datetime.now().year,
+        )
+        with open(os.path.join(ROOT, f"{slug}.html"), "w", encoding="utf-8") as fh:
+            fh.write(html_out)
+        made.append(f"{slug}.html")
+
+    for slug, title, desc, crumb, matcher in KEYWORD_PAGES:
+        emit(slug, title, desc, crumb, [j for j in jobs if matcher(j)], crumb)
+
+    for slug, prov, title, desc in PROVINCE_PAGES:
+        places = {p.lower() for p in PROVINCES[prov]}
+        subset = [j for j in jobs
+                  if (j.get("location") or "").split(",")[0].strip().lower() in places]
+        emit(slug, title, desc, f"{prov} jobs", subset, prov)
+
+    print(f"     {'':12s} {len(made):4d} keyword pages")
+    return made
+
+
 def write_locations_page():
     """A hub that links every city and category page that actually exists.
     Google follows links, not sitemaps — this is the internal-link backbone."""
@@ -1720,6 +2101,16 @@ def write_locations_page():
         if os.path.exists(fp):
             cat_rows.append(f'<a class="loc" href="category/{safe_slug(c)}.html">{esc(c)}'
                             f'<span>{esc(c.lower())} jobs</span></a>')
+
+    kw_rows = []
+    for slug, title, _d, _c, _m in KEYWORD_PAGES:
+        if os.path.exists(os.path.join(ROOT, f"{slug}.html")):
+            kw_rows.append(f'<a class="loc" href="{slug}.html">{esc(title.split("—")[0].strip())}'
+                           f'<span>popular search</span></a>')
+    for slug, prov, _t, _d in PROVINCE_PAGES:
+        if os.path.exists(os.path.join(ROOT, f"{slug}.html")):
+            kw_rows.append(f'<a class="loc" href="{slug}.html">{esc(prov)}'
+                           f'<span>province</span></a>')
 
     guides = [("national-job-portal-guide", "How to apply on NJP"),
               ("bps-pay-scales", "BPS pay scales explained"),
@@ -1782,6 +2173,9 @@ def write_locations_page():
   <h2>Cities</h2>
   <div class="grid">{''.join(city_rows) or '<p>No city pages yet.</p>'}</div>
 
+  <h2>Popular searches</h2>
+  <div class="grid">{''.join(kw_rows) or '<p>No keyword pages yet.</p>'}</div>
+
   <h2>Categories</h2>
   <div class="grid">{''.join(cat_rows) or '<p>No category pages yet.</p>'}</div>
 
@@ -1838,6 +2232,7 @@ def write_feed(jobs):
         f.write(xml)
 
 
+
 def write_sitemaps(jobs, landing_urls):
     """sitemap.xml (index) → sitemap-jobs-*.xml + sitemap-pages.xml + sitemap-images.xml"""
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -1861,12 +2256,18 @@ def write_sitemaps(jobs, landing_urls):
     pages = "".join(
         f"<url><loc>{esc(base)}/{esc(u)}</loc><lastmod>{now_iso}</lastmod>"
         f"<changefreq>hourly</changefreq><priority>0.7</priority></url>" for u in landing_urls)
+    for kw in glob.glob(os.path.join(ROOT, "*-jobs.html")) + glob.glob(os.path.join(ROOT, "sarkari-naukri.html")):
+        name = os.path.basename(kw)
+        if name == "jobs-in.html":
+            continue
+        pages += (f"<url><loc>{esc(base)}/{name}</loc><lastmod>{now_iso}</lastmod>"
+                  f"<changefreq>daily</changefreq><priority>0.8</priority></url>")
     pages += (f"<url><loc>{esc(base)}/</loc><lastmod>{now_iso}</lastmod>"
               f"<changefreq>hourly</changefreq><priority>1.0</priority></url>"
               f"<url><loc>{esc(base)}/employers.html</loc><lastmod>{now_iso}</lastmod>"
               f"<changefreq>monthly</changefreq><priority>0.5</priority></url>")
     for extra in ("about.html", "contact.html", "alerts.html", "privacy.html", "terms.html",
-                  "locations.html"):
+                  "locations.html", "verification.html"):
         pages += (f"<url><loc>{esc(base)}/{extra}</loc><lastmod>{now_iso}</lastmod>"
                   f"<changefreq>daily</changefreq><priority>0.6</priority></url>")
     for g in sorted(glob.glob(os.path.join(ROOT, "guides", "*.html"))):
@@ -2020,6 +2421,8 @@ def main():
         j["description_text"] = j.get("description_text") or j.get("description") or ""
         enforce_english(j)                      # site is English-only
         j["description"] = j["description_text"]
+        j["company"] = clean_employer(j)
+        j["display_title"] = display_title(j)
         j["summary"] = one_line(j.get("description") or j.get("how_to_apply") or j["title"], SUMMARY_LIMIT)
 
     expired_pk = 0
@@ -2039,10 +2442,21 @@ def main():
     # ── de-duplicate + sort
     cutoff = int(time.time()) - KEEP_DAYS * 86400
     seen_ids, seen_keys, jobs = set(), set(), []
-    for j in sorted(collected, key=lambda x: x.get("published", 0), reverse=True):
+
+    def richness(j):
+        """Prefer the copy of a duplicated job that carries the most detail."""
+        score = 0
+        for f in ("qualification", "age_limit", "vacancies", "bps", "last_date",
+                  "description_text", "salary", "how_to_apply"):
+            if j.get(f):
+                score += 1
+        return (score, j.get("published", 0))
+
+    for j in sorted(collected, key=richness, reverse=True):
         if j["id"] in seen_ids:
             continue
-        key = re.sub(r"[^a-z0-9]", "", (j["title"] + j["company"]).lower())[:60]
+        # normalise the key so "Jobs in Lahore" and "Jobs  Lahore" collide
+        key = re.sub(r"[^a-z0-9]", "", (j["title"] + " " + j["company"]).lower())[:70]
         if key in seen_keys:
             continue
         if j.get("published") and j["published"] < cutoff:
@@ -2053,6 +2467,17 @@ def main():
         if len(jobs) >= MAX_JOBS:
             break
 
+    # ── relevance gate ───────────────────────────────────────────────────
+    # A "jobs in Pakistan" site must not be 78% German on-site vacancies.
+    # Only jobs a candidate in Pakistan can act on are published: local jobs
+    # and remote roles open to Pakistan. Everything else is dropped before a
+    # page, a poster or a sitemap entry is created.
+    before = len(jobs)
+    jobs = [j for j in jobs if j.get("is_pk") or j.get("pak_friendly")]
+    dropped = before - len(jobs)
+    if dropped:
+        print(f"     {'':12s} {dropped:4d} out-of-scope jobs skipped")
+
     now = int(time.time())
     for j in jobs:
         j["age_days"] = max(0, int((now - (j.get("published") or now)) / 86400))
@@ -2062,6 +2487,7 @@ def main():
         "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "count": len(jobs),
         "companies": len({j["company"].lower() for j in jobs}),
+        "out_of_scope": dropped,
         "pak_friendly": sum(1 for j in jobs if j.get("pak_friendly")),
         "new_today": sum(1 for j in jobs if j.get("age_days", 9) == 0),
         "categories": {c: sum(1 for j in jobs if j["category"] == c) for c in CATEGORIES},
@@ -2121,9 +2547,11 @@ def main():
         json.dump({"meta": meta, "jobs": light_jobs}, f, ensure_ascii=False, separators=(",", ":"))
 
     landing_urls = build_landing_pages(jobs)
+    kw_urls = build_keyword_pages(jobs, landing_urls)
+    landing_urls = landing_urls + kw_urls
+    write_feed(jobs)
     n_loc = write_locations_page()
     print(f"     {'':12s} {n_loc:4d} location links")
-    write_feed(jobs)
     n_maps = write_sitemaps(jobs, landing_urls)
     print(f"     {'':12s} {len(landing_urls):4d} SEO pages, {n_maps} sitemaps")
 

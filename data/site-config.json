@@ -1,25 +1,33 @@
 {
-  "_readme": "Site-wide settings. Only the values an owner has to change live here. brand.* is used by the pages, the posters and the SEO templates.",
-  "site_url": "https://rozgar.pk",
-  "alerts": {
-    "email_form_url": "",
-    "whatsapp_channel_url": "",
-    "whatsapp_group_url": "",
-    "rss_feed": "feed.xml",
-    "owner_email": ""
-  },
-  "contact_email": "hello@rozgarjobs.com",
-  "social": {
-    "facebook": "",
-    "x": ""
-  },
-  "brand": {
-    "name": "RozgarJobs",
-    "domain": "rozgarjobs.com",
-    "tagline": "Jobs in Pakistan, updated every hour",
-    "tagline_short": "Jobs in Pakistan",
-    "email": "hello@rozgarjobs.com",
-    "logo": "assets/img/logo.svg",
-    "mark": "assets/img/mark.svg"
-  }
+ "_readme": "Site-wide settings. Only the values an owner has to change live here. brand.* is used by the pages, the posters and the SEO templates.",
+ "site_url": "https://rozgar.pk",
+ "alerts": {
+  "email_form_url": "",
+  "whatsapp_channel_url": "",
+  "whatsapp_group_url": "",
+  "rss_feed": "feed.xml",
+  "owner_email": "",
+  "digest_mode": "rss-to-email"
+ },
+ "contact_email": "hello@rozgarjobs.com",
+ "social": {
+  "facebook": "",
+  "x": ""
+ },
+ "brand": {
+  "name": "RozgarJobs",
+  "domain": "rozgarjobs.com",
+  "tagline": "Jobs in Pakistan, updated every hour",
+  "tagline_short": "Jobs in Pakistan",
+  "email": "hello@rozgarjobs.com",
+  "logo": "assets/img/logo.svg",
+  "mark": "assets/img/mark.svg"
+ },
+ "analytics": {
+  "_readme": "Leave empty to keep the site 100% cookieless with no third-party calls.",
+  "goatcounter": "",
+  "cloudflare_token": "",
+  "plausible_domain": "",
+  "track_search": true
+ }
 }

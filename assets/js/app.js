@@ -15,9 +15,13 @@ const state = {
   type: "",
   level: "",
   region: "",
+  scope: "pk",          // Pakistan is the default view
   pakOnly: false,
   govOnly: false,
   savedOnly: false,
+  closingSoon: false,
+  noExp: false,
+  qual: "",
   sort: "new",
   saved: new Set(),
 };
@@ -72,13 +76,69 @@ function persistSaved() {
 }
 
 /* ─────────────────────────────── filtering */
+const SCOPES = {
+  pk: (j) => !!j.is_pk,
+  remote: (j) => !j.is_pk && !!j.remote,
+  intl: (j) => !j.is_pk && !j.remote,
+  all: () => true,
+};
+
+const SYNONYMS = {
+  teacher: ["teaching", "lecturer", "educator", "instructor", "professor"],
+  teaching: ["teacher", "lecturer", "educator"],
+  clerk: ["clerical", "administrative", "admin", "stenographer"],
+  admin: ["administrative", "clerical", "administration"],
+  nurse: ["nursing", "staff nurse"],
+  driver: ["driving", "transport"],
+  police: ["constable", "security", "law enforcement"],
+  army: ["pak army", "defence", "military", "soldier"],
+  computer: ["it", "software", "ict"],
+  accountant: ["accounting", "finance", "audit"],
+  engineer: ["engineering"],
+  doctor: ["medical", "mbbs", "physician"],
+  internship: ["intern", "trainee"],
+  govt: ["government", "sarkari", "public sector"],
+  government: ["govt", "public sector"],
+};
+
+function expandQuery(q) {
+  const base = q.toLowerCase().trim();
+  if (!base) return [];
+  const words = base.split(/\s+/);
+  const out = new Set(words);
+  words.forEach((w) => (SYNONYMS[w] || []).forEach((x) => out.add(x)));
+  return [...out];
+}
+
 function applyFilters() {
   const q = state.q.toLowerCase().trim();
   const words = q ? q.split(/\s+/) : [];
+  const anyWords = expandQuery(q);
 
   const today = new Date().toISOString().slice(0, 10);
+  const scopeFn = SCOPES[state.scope] || SCOPES.all;
+  const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
   state.filtered = state.jobs.filter((j) => {
     if (j.is_pk && j.last_date && j.last_date < today) return false;
+    if (!scopeFn(j)) return false;
+    if (state.closingSoon && !(j.last_date && j.last_date >= today && j.last_date <= weekAhead)) return false;
+    if (state.noExp) {
+      const exp = (j.experience || "").toLowerCase();
+      const fresh = !exp || /0\s*(-\s*|to\s*)?[12]?\s*year/.test(exp) ||
+                    exp.includes("fresh") || exp.includes("entry") || exp.includes("no experience") ||
+                    exp.includes("not required") || exp.includes("not specified");
+      if (!fresh) return false;
+    }
+    if (state.qual) {
+      const quals = ((j.qualification || "") + " " + (j.title || "")).toLowerCase();
+      const map = {
+        matric: ["matric", "metric", "middle", "primary", "matriculation"],
+        inter: ["intermediate", "f.sc", "fsc", "fa", "i.com", "inter"],
+        bachelor: ["bachelor", "b.a", "b.sc", "bsc", "b.com", "bcom", "bs ", "graduat", "bcs", "bba"],
+        master: ["master", "m.a", "m.sc", "msc", "mba", "m.com", "mcom", "ms ", "mphil"],
+      };
+      if (!(map[state.qual] || []).some((k) => quals.includes(k))) return false;
+    }
     if (state.category && j.category !== state.category) return false;
     if (state.type && j.type !== state.type) return false;
     if (state.level && j.level !== state.level) return false;
@@ -87,8 +147,11 @@ function applyFilters() {
     if (state.govOnly && (j.sector || "") !== "government" && !(j.is_pk && j.source !== "Manual")) return false;
     if (state.savedOnly && !state.saved.has(j.id)) return false;
     if (words.length) {
-      const hay = (j.title + " " + j.company + " " + (j.tags || []).join(" ") + " " + j.location + " " + j.category).toLowerCase();
-      if (!words.every((w) => hay.includes(w))) return false;
+      const hay = (j.title + " " + j.company + " " + (j.tags || []).join(" ") + " " + j.location + " " +
+                   j.category + " " + (j.qualification || "") + " " + (j.description_text || "").slice(0, 400)).toLowerCase();
+      // every typed word must match, OR a synonym of it must match
+      const ok = words.every((w) => hay.includes(w) || (SYNONYMS[w] || []).some((x) => hay.includes(x)));
+      if (!ok) return false;
     }
     return true;
   });
@@ -111,11 +174,11 @@ function cardHTML(j) {
     return `
     <article class="job-card poster-card ${j.is_manual ? "is-manual" : ""}">
       <a class="poster-thumb" href="jobs/${esc(j.slug)}.html">
-        <img src="${esc(j.poster)}" alt="${esc(j.title)} poster" loading="lazy">
+        <img src="${esc(j.poster)}" alt="${esc(j.display_title || j.title)} poster" loading="lazy">
         ${j.last_date ? `<span class="poster-date">Last date ${esc(prettyDate(j.last_date))}</span>` : ""}
       </a>
       <div class="job-info">
-        <h3 class="job-title"><a href="jobs/${esc(j.slug)}.html">${esc(j.title)}</a></h3>
+        <h3 class="job-title"><a href="jobs/${esc(j.slug)}.html">${esc(j.display_title || j.title)}</a></h3>
         <p class="job-company"><b>${esc(j.company)}</b>${j.location ? " · " + esc(j.location) : ""}</p>
         <div class="chips">
           <span class="chip chip-src">${esc(j.source)}</span>
@@ -143,7 +206,7 @@ function cardHTML(j) {
   <article class="job-card ${j.is_manual ? "is-manual" : ""}">
     ${logo}
     <div class="job-info">
-      <h3 class="job-title"><a href="jobs/${esc(j.slug)}.html">${esc(j.title)}</a></h3>
+      <h3 class="job-title"><a href="jobs/${esc(j.slug)}.html">${esc(j.display_title || j.title)}</a></h3>
       <p class="job-company"><b>${esc(j.company)}</b>${j.location ? " · " + esc(j.location) : ""}</p>
       <div class="chips">
         ${isNew ? '<span class="chip chip-new">NEW</span>' : ""}
@@ -182,6 +245,11 @@ function render() {
   if (state.type) bits.push(state.type);
   if (state.level) bits.push(state.level);
   if (state.region) bits.push(state.region);
+  const scopeLabel = { pk: "Pakistan jobs", remote: "Remote jobs", intl: "International jobs", all: "" }[state.scope];
+  if (scopeLabel) bits.push(scopeLabel);
+  if (state.closingSoon) bits.push("Closing this week");
+  if (state.noExp) bits.push("No experience needed");
+  if (state.qual) bits.push(state.qual === "inter" ? "Intermediate" : state.qual.charAt(0).toUpperCase() + state.qual.slice(1));
   if (state.pakOnly) bits.push("Pakistan jobs");
   if (state.govOnly) bits.push("Government");
   if (state.savedOnly) bits.push("Saved");
@@ -193,6 +261,7 @@ function render() {
 
   renderCategories();
   renderPkStrip();
+  renderScopeTabs();
   syncUrl();
 }
 
@@ -209,6 +278,27 @@ function renderCategories() {
     .slice(0, 8)
     .map(([c, n]) => `<li><a href="#" data-cat="${esc(c)}">${esc(c)}<span class="c">${n}</span></a></li>`)
     .join("");
+}
+
+function renderScopeTabs() {
+  const today = new Date().toISOString().slice(0, 10);
+  const live = state.jobs.filter((j) => !(j.is_pk && j.last_date && j.last_date < today));
+  const n = {
+    pk: live.filter(SCOPES.pk).length,
+    remote: live.filter(SCOPES.remote).length,
+    intl: live.filter(SCOPES.intl).length,
+    all: live.length,
+  };
+  const ids = { pk: "#scPk", remote: "#scRemote", intl: "#scIntl", all: "#scAll" };
+  Object.entries(ids).forEach(([k, sel]) => {
+    const el = $(sel);
+    if (el) el.textContent = n[k].toLocaleString();
+  });
+  document.querySelectorAll("#scopeTabs button").forEach((b) => {
+    const on = b.dataset.scope === state.scope;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-selected", on);
+  });
 }
 
 function renderStats() {
@@ -265,12 +355,12 @@ function renderPkStrip() {
       return `
       <a class="pk-card" href="jobs/${esc(j.slug)}.html">
         <div class="pk-thumb">
-          <img src="${esc(j.poster || "")}" alt="${esc(j.title)} poster" loading="lazy"
+          <img src="${esc(j.poster || "")}" alt="${esc(j.display_title || j.title)} poster" loading="lazy"
                onerror="this.style.display='none'">
           ${urgent ? `<span class="pk-urgent">${dl === 0 ? "Last day" : dl + "d left"}</span>` : ""}
         </div>
         <div class="pk-body">
-          <strong>${esc(j.title)}</strong>
+          <strong>${esc(j.display_title || j.title)}</strong>
           <span>${esc(j.company)}</span>
           <span class="pk-meta">${esc(j.location)} · ${j.last_date ? "Last date " + esc(prettyDate(j.last_date)) : "Open"}</span>
         </div>
@@ -304,6 +394,10 @@ function syncUrl() {
   if (state.type) p.set("type", state.type);
   if (state.level) p.set("level", state.level);
   if (state.region) p.set("region", state.region);
+  if (state.scope !== "pk") p.set("scope", state.scope);
+  if (state.closingSoon) p.set("closing", "1");
+  if (state.noExp) p.set("fresh", "1");
+  if (state.qual) p.set("qual", state.qual);
   if (state.pakOnly) p.set("pak", "1");
   if (state.savedOnly) p.set("saved", "1");
   if (state.sort !== "new") p.set("sort", state.sort);
@@ -318,6 +412,10 @@ function readUrl() {
   state.type = p.get("type") || "";
   state.level = p.get("level") || "";
   state.region = p.get("region") || "";
+  state.scope = p.get("scope") || (p.get("pak") === "1" ? "pk" : "pk");
+  state.closingSoon = p.get("closing") === "1";
+  state.noExp = p.get("fresh") === "1";
+  state.qual = p.get("qual") || "";
   state.pakOnly = p.get("pak") === "1";
   state.savedOnly = p.get("saved") === "1";
   state.sort = p.get("sort") || "new";
@@ -327,9 +425,12 @@ function readUrl() {
   $("#type").value = state.type;
   $("#level").value = state.level;
   $("#sort").value = state.sort;
-  $("#pakOnly").setAttribute("aria-pressed", state.pakOnly);
+  if ($("#pakOnly")) $("#pakOnly").setAttribute("aria-pressed", state.pakOnly);
   $("#govOnly").setAttribute("aria-pressed", state.govOnly);
   $("#savedOnly").setAttribute("aria-pressed", state.savedOnly);
+  if ($("#closingSoon")) $("#closingSoon").setAttribute("aria-pressed", state.closingSoon);
+  if ($("#noExp")) $("#noExp").setAttribute("aria-pressed", state.noExp);
+  if ($("#qual")) $("#qual").value = state.qual;
 }
 
 /* ─────────────────────────────── events */
@@ -387,7 +488,35 @@ function bind() {
     document.querySelector(".main-grid").scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  $("#pakOnly").addEventListener("click", (e) => {
+  document.querySelectorAll("#scopeTabs button").forEach((b) => {
+    b.addEventListener("click", () => {
+      state.scope = b.dataset.scope;
+      state.shown = PAGE;
+      render();
+    });
+  });
+
+  ["closingSoon", "noExp"].forEach((id) => {
+    const el = $("#" + id);
+    if (!el) return;
+    el.addEventListener("click", () => {
+      state[id] = !state[id];
+      el.setAttribute("aria-pressed", state[id]);
+      state.shown = PAGE;
+      render();
+    });
+  });
+
+  if ($("#qual")) {
+    $("#qual").addEventListener("change", (e) => {
+      state.qual = e.target.value;
+      state.shown = PAGE;
+      render();
+    });
+  }
+
+  const pakBtn = $("#pakOnly");
+  if (pakBtn) pakBtn.addEventListener("click", (e) => {
     state.pakOnly = !state.pakOnly;
     e.currentTarget.setAttribute("aria-pressed", state.pakOnly);
     state.shown = PAGE;
@@ -418,12 +547,16 @@ function bind() {
   });
 
   $("#clearFilters").addEventListener("click", () => {
-    Object.assign(state, { q: "", category: "", type: "", level: "", region: "", pakOnly: false, govOnly: false, savedOnly: false, shown: PAGE });
+    Object.assign(state, { q: "", category: "", type: "", level: "", region: "", scope: "pk",
+      pakOnly: false, govOnly: false, savedOnly: false, closingSoon: false, noExp: false, qual: "", shown: PAGE });
     $("#q").value = "";
     $("#region").value = "";
     $("#type").value = "";
     $("#level").value = "";
-    $("#pakOnly").setAttribute("aria-pressed", "false");
+    if ($("#pakOnly")) $("#pakOnly").setAttribute("aria-pressed", "false");
+    if ($("#closingSoon")) $("#closingSoon").setAttribute("aria-pressed", "false");
+    if ($("#noExp")) $("#noExp").setAttribute("aria-pressed", "false");
+    if ($("#qual")) $("#qual").value = "";
     $("#govOnly").setAttribute("aria-pressed", "false");
     $("#savedOnly").setAttribute("aria-pressed", "false");
     render();
